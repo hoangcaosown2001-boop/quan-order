@@ -6,7 +6,7 @@
   'use strict';
 
   const C = window.Core;
-  const PHIEN_BAN_APP = '1.0.2';
+  const PHIEN_BAN_APP = '1.0.3';
   const KHOA = 'quanOrder.trangThai';
   const KHOA_CT = 'quanOrder.congThuc';
   const BANG_MAU = ['#1F6FD1', '#8A5A3B', '#F3E5C8', '#F4B400', '#F48FB1', '#C43D22',
@@ -356,8 +356,8 @@
         'aria-selected': chon ? 'true' : 'false',
       }, el('span', { class: 'ten-chip', text: C.tenKhach(k) }), el('span', { text: '·' }),
       el('span', { class: 'tien-chip', text: C.dinhDangK(C.tongTien(k, st.menu)) }));
-      if (chon && !k.dong.length && st.khach.length > 1) {
-        chip.append(el('span', { class: 'xoa-chip', 'data-xoa': k.id, 'aria-label': 'Xóa khách trống', text: '✕' }));
+      if (chon && coNutXoa(k)) {
+        chip.append(el('span', { class: 'xoa-chip', 'data-xoa': k.id, 'aria-label': 'Xóa khách', text: '✕' }));
       }
       ds.append(chip);
     });
@@ -367,6 +367,11 @@
     }
   }
 
+  // ✕ luôn có trên chip đang chọn (trừ khi chỉ còn 1 khách trống — xóa cũng như không)
+  function coNutXoa(k) {
+    return k.dong.length > 0 || st.khach.length > 1;
+  }
+
   // Chỉ cập nhật chip của khách đang chọn (nhanh khi chạm món)
   function veChipHienTai() {
     const k = khachHienTai();
@@ -374,7 +379,7 @@
     if (!chip) return veDaiKhach();
     chip.querySelector('.tien-chip').textContent = C.dinhDangK(C.tongTien(k, st.menu));
     const coX = !!chip.querySelector('.xoa-chip');
-    if (coX !== (!k.dong.length && st.khach.length > 1)) veDaiKhach();
+    if (coX !== coNutXoa(k)) veDaiKhach();
   }
 
   function veOrder(cuonChip) {
@@ -399,7 +404,7 @@
 
   $('#dsKhach').addEventListener('click', function (e) {
     const x = e.target.closest('[data-xoa]');
-    if (x) { xongKhach(x.dataset.xoa); return; }
+    if (x) { xongKhach(x.dataset.xoa, 'Đã xóa'); return; }
     const chip = e.target.closest('.chip');
     if (!chip) return;
     if (chip.dataset.id === st.dangChon) { suaTenKhach(chip.dataset.id); return; }
@@ -559,14 +564,14 @@
   }
 
   // Xong khách: xóa khỏi dải, chuyển khách kế tiếp, cho "Hoàn lại" trong 8 giây
-  function xongKhach(id) {
+  function xongKhach(id, chu) {
     const k = C.timKhach(st, id);
     if (!k) return;
     const kq = C.xongKhach(st, id, Date.now());
     st = kq.st;
     veOrder(true);
     luuSau();
-    thongBao('Đã xong ' + C.tenKhach(k), 'Hoàn lại', function () {
+    thongBao((chu || 'Đã xong') + ' ' + C.tenKhach(k), 'Hoàn lại', function () {
       st = C.hoanLaiXong(st, kq.banGhi);
       veOrder(true);
       luuSau();

@@ -32,7 +32,7 @@
 
 - **Thứ tự món:** món bán chạy (★, ô rộng gấp đôi, chữ to) luôn đứng đầu nhóm. Trong Cà phê Việt, VN Sữa đứng trước VN Đen.
 - **Xong khách:** chuyển sang khách đứng **sau** trong dải; nếu là khách cuối thì về khách đứng **trước**; hết khách thì tự tạo khách mới trống.
-- **Khách trống:** khi đang chọn một khách chưa có món (và còn khách khác), chip của khách đó có nút **✕** để xóa nhanh, không cần qua màn thanh toán.
+- **Nút ✕ trên chip:** chip của khách đang chọn luôn có **✕** để xóa khách ngay (kể cả khi đã có món), có **Hoàn lại** 8 giây nếu bấm nhầm.
 - **Số khách:** đổi ngày lúc 04:00 sáng giờ Việt Nam. Sang ngày mới, các khách **trống** từ hôm trước tự biến mất, khách **còn món** được giữ lại. Số đếm lại từ nhỏ nhất chưa dùng.
 - **Tên khách A1–D10:** chạm chip đang chọn → bảng 4 cột × 10 dòng + hàng Take away 1–4, chạm 1 ô là xong. Ô đang được khách khác dùng hiện mờ (vẫn chọn được).
 - **Hoàn tác** lùi cả thao tác chạm ô món lẫn nút − / + trong Danh sách (tối đa 50 bước mỗi khách).

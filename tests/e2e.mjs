@@ -296,6 +296,13 @@ for (const may of MAY) {
   await p.tap('#nutBoTen');
   kiem((await p.textContent('.chip.chon .ten-chip')) === 'Khách 2', '"Bỏ tên" → về "Khách 2"');
 
+  // Nút ✕ trên chip đang chọn: xóa luôn cả khi có món, có Hoàn lại
+  kiem(await p.isVisible('.chip.chon .xoa-chip'), 'Chip khách đang có món vẫn có nút ✕');
+  await p.tap('.chip.chon .xoa-chip');
+  kiem((await p.textContent('.thong-bao')).includes('Đã xóa Khách 2') && (await p.textContent('#soTong')) === '0đ', 'Bấm ✕ → xóa khách ngay (không cần hoàn tác trước)', await p.textContent('.thong-bao'));
+  await p.tap('.thong-bao button');
+  kiem((await chipChon(p)).startsWith('Khách 2') && (await p.textContent('#soTong')) === '65.000đ' && (await p.$$('.chip')).length === 1, 'Bấm "Hoàn lại" sau ✕ → khách quay lại đủ món');
+
   // Hoàn lại sau khi Xong nhầm
   await p.tap('#nutTong');
   await p.tap('#nutXong');
