@@ -6,7 +6,7 @@
   'use strict';
 
   const C = window.Core;
-  const PHIEN_BAN_APP = '1.0.4';
+  const PHIEN_BAN_APP = '1.0.5';
   const KHOA = 'quanOrder.trangThai';
   const KHOA_CT = 'quanOrder.congThuc';
   const BANG_MAU = ['#1F6FD1', '#8A5A3B', '#F3E5C8', '#F4B400', '#F48FB1', '#C43D22',
@@ -216,6 +216,14 @@
     nd.scrollTop = 0;
     ve(nd); // vẽ sau khi hiện để ô nhập focus được (bật bàn phím ngay)
   }
+  // Vừa đóng sheet: bỏ qua chạm trong 0,35 giây để chạm đúp vào "Xong" không rơi xuống nút bên dưới
+  let henChan = 0;
+  function chanChamXuyen() {
+    document.body.classList.add('chan-cham');
+    clearTimeout(henChan);
+    henChan = setTimeout(() => document.body.classList.remove('chan-cham'), 350);
+  }
+
   function veLaiSheet() {
     if (!sheetDangMo) return;
     const nd = $('#noiDungSheet');
@@ -231,6 +239,7 @@
     $('#nenSheet').hidden = true;
     $('#sheet').hidden = true;
     $('#noiDungSheet').textContent = '';
+    chanChamXuyen();
     if (kd) kd();
   }
 
@@ -516,7 +525,7 @@
       const oThoi = el('div', { class: 'tien-thoi cho', id: 'tienThoi', text: 'Chọn hoặc nhập tiền khách đưa' });
       const oNhap = el('input', {
         class: 'o-nhap-tien', id: 'oKhachDua', inputmode: 'numeric', pattern: '[0-9.]*', autocomplete: 'off',
-        placeholder: 'Tự nhập (150 = 150.000đ)', 'aria-label': 'Tiền khách đưa', enterkeyhint: 'done',
+        placeholder: 'Tự nhập (150 = 150.000đ)', maxlength: 13, 'aria-label': 'Tiền khách đưa', enterkeyhint: 'done',
       });
       const nutMG = new Map();
 
@@ -1365,10 +1374,31 @@
 
   /* ================= KHỞI ĐỘNG ================= */
 
+  // Dữ liệu hỏng: giữ lại bản gốc (không ghi đè) rồi mở app với dữ liệu mới
+  let dataHong = false;
+  function giuBanHong(khoa) {
+    try {
+      const tho = localStorage.getItem(khoa);
+      if (tho) localStorage.setItem(khoa + '.hong.' + Date.now(), tho);
+    } catch (e) { /* bỏ qua */ }
+    dataHong = true;
+  }
+
   function khoiDong() {
-    st = C.khoiTao(docJSON(KHOA), window.MENU_MAC_DINH, Date.now());
-    ct = docJSON(KHOA_CT) || { phienBan: 1, daTaoMau: false, ds: [] };
+    try {
+      st = C.khoiTao(docJSON(KHOA), window.MENU_MAC_DINH, Date.now());
+    } catch (e) {
+      giuBanHong(KHOA);
+      st = C.khoiTao(null, window.MENU_MAC_DINH, Date.now());
+    }
+    if (localStorage.getItem(KHOA) && !docJSON(KHOA)) giuBanHong(KHOA);
+    ct = docJSON(KHOA_CT);
+    if (!ct || typeof ct !== 'object') {
+      if (localStorage.getItem(KHOA_CT)) giuBanHong(KHOA_CT);
+      ct = { phienBan: 1, daTaoMau: false, ds: [] };
+    }
     if (!Array.isArray(ct.ds)) ct.ds = [];
+    ct.ds = ct.ds.filter((c) => c && c.id && typeof c.ten === 'string');
     ct.ds = ct.ds.map((c) => Object.assign({ anh: [], nguyenLieu: [], buoc: [], ghiChu: '', ly: '', da: '', giaVon: null }, c));
     apGiaoDien();
     document.body.classList.add('o-order');
@@ -1376,6 +1406,7 @@
     veOrder(true);
     luuNgay();
 
+    if (dataHong) thongBao('Dữ liệu cũ bị lỗi đã được cất riêng, app chạy lại bình thường', null, null, 6000);
     setTimeout(function () {
       taoMauNeuCan();
       kiemTraNhacSaoLuu(true);
@@ -1397,6 +1428,17 @@
   window.addEventListener('storage', function (e) {
     if (e.key === KHOA && e.newValue) { st = C.khoiTao(docJSON(KHOA), window.MENU_MAC_DINH, Date.now()); veLuoi(); veOrder(); }
   });
+
+  // Lỗi bất ngờ: không để app đứng — lưu ngay, báo nhỏ (tối đa 1 lần / 10 giây)
+  let lanBaoLoi = 0;
+  function baoLoi() {
+    try { if (st) luuNgay(); } catch (e) { /* bỏ qua */ }
+    if (Date.now() - lanBaoLoi < 10000) return;
+    lanBaoLoi = Date.now();
+    try { thongBao('Có lỗi nhỏ, đã bỏ qua. Order vẫn an toàn.', null, null, 4000); } catch (e) { /* bỏ qua */ }
+  }
+  window.addEventListener('error', baoLoi);
+  window.addEventListener('unhandledrejection', baoLoi);
 
   // Chặn phóng to bằng chụm ngón trên iOS (trừ trình xem ảnh tự xử lý)
   document.addEventListener('gesturestart', (e) => e.preventDefault());

@@ -355,6 +355,84 @@ for (const may of MAY) {
   await ctx.close();
 }
 
+// ===== Chịu tải: 25 khách, 600 lần chạm dồn dập, số tiền hiển thị luôn đúng =====
+{
+  const { ctx, p } = await moApp(MAY[0]);
+  const kq = await p.evaluate(async () => {
+    const gia = new Map(window.MENU_MAC_DINH.mon.map((m) => [m.id, m.gia]));
+    const ids = [...gia.keys()];
+    const tuTinh = new Map(); // id khách → tổng tiền tự tính độc lập
+    let hat = 12345;
+    const r = () => { hat = (hat * 1664525 + 1013904223) >>> 0; return hat / 4294967296; };
+    const dinhDang = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'đ';
+    for (let i = 0; i < 24; i++) document.getElementById('nutThemKhach').click();
+    let lauNhat = 0, sai = 0;
+    for (let i = 0; i < 600; i++) {
+      if (r() < 0.08) {
+        const chips = document.querySelectorAll('.chip:not(.chon)');
+        chips[Math.floor(r() * chips.length)].click();
+      }
+      const id = ids[Math.floor(r() * ids.length)];
+      const kId = window.__quan.trangThai().dangChon;
+      const t0 = performance.now();
+      document.querySelector(`[data-mon="${id}"]`).click();
+      lauNhat = Math.max(lauNhat, performance.now() - t0);
+      tuTinh.set(kId, (tuTinh.get(kId) || 0) + gia.get(id));
+      if (document.getElementById('soTong').textContent !== dinhDang(tuTinh.get(kId))) sai++;
+      if (i % 50 === 0) await new Promise((ok) => setTimeout(ok, 0));
+    }
+    const st = window.__quan.trangThai();
+    const lechChip = [...document.querySelectorAll('.chip')].filter((c) => {
+      const t = tuTinh.get(c.dataset.id) || 0;
+      const k = t / 1000;
+      return c.querySelector('.tien-chip').textContent !== (t ? (Number.isInteger(k) ? String(k).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'k' : '') : '0đ');
+    }).length;
+    return { khach: st.khach.length, lauNhat, sai, lechChip, tongLy: st.khach.reduce((s, k) => s + k.dong.reduce((a, d) => a + d.soLuong, 0), 0), tuTinh: [...tuTinh] };
+  });
+  kiem(kq.khach === 25 && kq.tongLy === 600, 'Chịu tải: 25 khách cùng lúc, 600 lần chạm đều được tính', `${kq.khach} khách, ${kq.tongLy} ly`);
+  kiem(kq.sai === 0 && kq.lechChip === 0, 'Chịu tải: số tổng và tiền trên từng chip khớp 100% với cách tính độc lập', `sai ${kq.sai}/600, chip lệch ${kq.lechChip}`);
+  kiem(kq.lauNhat < 50, 'Chịu tải: lần chạm chậm nhất vẫn < 50ms', `${kq.lauNhat.toFixed(1)}ms`);
+  await p.reload();
+  await p.waitForSelector('.o-mon');
+  const sauTai = await p.evaluate((ds) => {
+    const st = window.__quan.trangThai();
+    const gia = new Map(st.menu.mon.map((m) => [m.id, m.gia]));
+    return ds.every(([id, t]) => st.khach.find((k) => k.id === id).dong.reduce((s, d) => s + gia.get(d.monId) * d.soLuong, 0) === t);
+  }, kq.tuTinh);
+  kiem(sauTai, 'Chịu tải: tải lại trang → tiền của cả 25 khách còn nguyên');
+  kiem(p.loiTrang.length === 0, 'Chịu tải: không có lỗi JavaScript', p.loiTrang.join(' | '));
+
+  // Dữ liệu trên máy bị hỏng → app vẫn mở, bản hỏng được cất riêng (không ghi đè mất)
+  // Ghi dữ liệu hỏng rồi chặn app tự lưu đè trước khi tải lại (giống máy tắt đột ngột lúc đang ghi)
+  await p.evaluate(() => {
+    localStorage.setItem('quanOrder.trangThai', '{hỏng');
+    Storage.prototype.setItem = function () {};
+  });
+  await p.reload();
+  await p.waitForSelector('.o-mon');
+  const hong = await p.evaluate(() => ({
+    cat: Object.keys(localStorage).filter((k) => k.startsWith('quanOrder.trangThai.hong.')).map((k) => localStorage.getItem(k)),
+    chip: document.querySelector('.chip.chon').textContent,
+  }));
+  kiem(hong.cat.includes('{hỏng') && hong.chip.startsWith('Khách 1'), 'Dữ liệu bị hỏng → app vẫn mở bình thường, bản cũ được cất riêng', hong.chip);
+  await ctx.close();
+}
+
+// ===== Chạm đúp "Xong" không rơi xuống nút bên dưới =====
+{
+  const { ctx, p } = await moApp(MAY[0]);
+  await cham(p, 'latte');
+  await p.tap('#nutTong');
+  await p.waitForTimeout(350); // đợi bảng trượt lên xong
+  const xong = await (await p.$('#nutXong')).boundingBox();
+  await p.touchscreen.tap(xong.x + xong.width / 2, xong.y + xong.height / 2);
+  await p.touchscreen.tap(xong.x + xong.width / 2, xong.y + xong.height / 2);
+  await p.waitForTimeout(400);
+  kiem((await p.$eval('#manOrder', (e) => e.classList.contains('hien'))) && (await p.textContent('#soTong')) === '0đ',
+    'Chạm đúp "Xong" → lần chạm thứ 2 không bấm nhầm nút bên dưới');
+  await ctx.close();
+}
+
 // ===== Cài đặt: sửa menu, sáng/tối, sao lưu & khôi phục (kèm ảnh), xóa mẫu =====
 {
   const { ctx, p } = await moApp(MAY[0]);

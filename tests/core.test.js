@@ -262,3 +262,127 @@ test('đổi tên khách; để trống thì về "Khách N"', () => {
   st = C.taoKhach(st, SANG + 1);
   assert.equal(C.tenKhach(st.khach[1]), 'Khách 2');
 });
+
+// Sinh số ngẫu nhiên lặp lại được (cùng hạt giống → cùng chuỗi thao tác)
+function ngauNhien(hat) {
+  let x = hat >>> 0;
+  return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; };
+}
+
+test('thử 20.000 thao tác ngẫu nhiên: tổng tiền luôn đúng, không bao giờ hỏng trạng thái', () => {
+  for (const hat of [1, 7, 42, 2026, 99999]) {
+    const r = ngauNhien(hat);
+    const chon = (ds) => ds[Math.floor(r() * ds.length)];
+    const ids = MENU.mon.map((m) => m.id);
+    const gia = new Map(MENU.mon.map((m) => [m.id, m.gia]));
+    let st = trangThai();
+    let now = SANG;
+    let banGhi = null;
+    // Mô hình độc lập: đếm số ly theo id khách, tự tính tiền
+    const moHinh = new Map([[st.dangChon, new Map()]]);
+    const lichSuMH = new Map([[st.dangChon, []]]);
+    for (let i = 0; i < 4000; i++) {
+      now += Math.floor(r() * 120000);
+      const k = khachDangChon(st);
+      const mh = moHinh.get(k.id);
+      const ls = lichSuMH.get(k.id);
+      const p = r();
+      if (p < 0.5) {
+        const id = chon(ids);
+        st = C.capNhatKhach(st, C.themMon(k, id));
+        mh.set(id, (mh.get(id) || 0) + 1);
+        ls.push(['+', id]);
+      } else if (p < 0.6 && k.dong.length) {
+        const id = chon(k.dong).monId;
+        st = C.capNhatKhach(st, C.botMon(k, id));
+        mh.set(id, mh.get(id) - 1);
+        ls.push(['-', id]);
+      } else if (p < 0.72) {
+        st = C.capNhatKhach(st, C.hoanTac(k));
+        const b = ls.pop();
+        if (b) mh.set(b[1], (mh.get(b[1]) || 0) + (b[0] === '+' ? -1 : 1));
+      } else if (p < 0.8) {
+        st = C.taoKhach(st, now);
+        moHinh.set(st.dangChon, new Map());
+        lichSuMH.set(st.dangChon, []);
+      } else if (p < 0.88) {
+        st = C.chonKhach(st, chon(st.khach).id);
+      } else if (p < 0.96) {
+        const kq = C.xongKhach(st, k.id, now);
+        st = kq.st;
+        banGhi = { kq, mh, ls };
+        if (!moHinh.has(st.dangChon)) { moHinh.set(st.dangChon, new Map()); lichSuMH.set(st.dangChon, []); }
+      } else if (banGhi) {
+        st = C.hoanLaiXong(st, banGhi.kq.banGhi);
+        banGhi = null;
+      }
+      if (ls.length > 50) ls.splice(0, ls.length - 50);
+
+      // Bất biến
+      assert.ok(st.khach.length >= 1, 'luôn có ít nhất 1 khách');
+      assert.ok(C.timKhach(st, st.dangChon), 'khách đang chọn luôn tồn tại');
+      const so = st.khach.map((x) => x.so);
+      assert.equal(new Set(so).size, so.length, 'không trùng số khách');
+      for (const kh of st.khach) {
+        assert.ok(kh.dong.every((d) => Number.isInteger(d.soLuong) && d.soLuong > 0), 'số lượng luôn nguyên dương');
+        assert.ok(kh.lichSu.length <= 50);
+        const t = C.tongTien(kh, st.menu);
+        assert.ok(Number.isInteger(t) && t >= 0, 'tổng là số nguyên ≥ 0');
+        assert.equal(t, kh.dong.reduce((s, d) => s + gia.get(d.monId) * d.soLuong, 0));
+        assert.equal(C.soLy(kh), kh.dong.reduce((s, d) => s + d.soLuong, 0));
+      }
+      // So với mô hình độc lập cho khách đang chọn
+      const kc = khachDangChon(st);
+      const mhc = moHinh.get(kc.id);
+      if (mhc) {
+        const tuTinh = [...mhc].reduce((s, [id, n]) => s + gia.get(id) * n, 0);
+        assert.equal(C.tongTien(kc, st.menu), tuTinh, `hạt ${hat}, bước ${i}: tổng khớp mô hình`);
+      }
+    }
+  }
+});
+
+test('dữ liệu hỏng/sai kiểu không làm tổng tiền sai hay app lỗi', () => {
+  const hong = {
+    phienBan: 1,
+    menu: { nhom: [{ id: 'a', ten: 'A', mau: 'xanh' }], thuTuNhom: 'sai', mon: [
+      { id: 'x', nhom: 'a', ten: 'X', gia: '25000' },
+      { id: 'y', nhom: 'a', ten: 'Y', gia: 'abc' },
+      { id: 'x', nhom: 'a', ten: 'X trùng', gia: 99 },
+      null,
+    ] },
+    khach: [
+      { id: 'k1', so: '2', dong: [{ monId: 'x', soLuong: '3' }, { monId: 'x', soLuong: 1 }, { monId: 'y', soLuong: -4 }, null], lichSu: 'sai' },
+      { id: 'k2', so: 2, dong: 'sai' },
+      null,
+    ],
+    dangChon: 'khong-co',
+    ngay: C.ngayKinhDoanh(SANG),
+  };
+  const st = C.khoiTao(hong, MENU, SANG);
+  assert.equal(st.menu.mon.length, 2);
+  assert.equal(st.menu.mon[0].gia, 25000);
+  assert.equal(st.menu.mon[1].gia, 0);
+  assert.equal(st.menu.nhom[0].mau, '#888888');
+  assert.ok(Array.isArray(st.menu.thuTuNhom));
+  assert.equal(st.khach.length, 2);
+  assert.notEqual(st.khach[0].so, st.khach[1].so, 'số khách trùng được tách ra');
+  assert.deepEqual(st.khach[0].dong, [{ monId: 'x', soLuong: 4, ghiChu: null }], 'gộp dòng trùng, bỏ số lượng âm');
+  assert.equal(C.tongTien(st.khach[0], st.menu), 100000);
+  assert.equal(st.dangChon, 'k1');
+  assert.equal(C.hieuSoTien('9'.repeat(30)), 100000000, 'số gõ quá dài bị chặn');
+});
+
+test('"Hoàn lại" đúng lúc qua 04:00 không tạo 2 khách trùng số', () => {
+  let st = trangThai();
+  st = C.taoKhach(st, SANG + 1); // Khách 2
+  st = C.taoKhach(st, SANG + 2); // Khách 3
+  const r = C.xongKhach(st, st.khach[0].id, SANG + 3); // xong Khách 1
+  const sau4h = Date.UTC(2026, 9, 6, 21, 0);
+  const moi = C.taoKhach(r.st, sau4h); // ngày mới → số 1 lại trống → "Khách 1" mới
+  assert.equal(C.tenKhach(moi.khach.at(-1)), 'Khách 1');
+  const lai = C.hoanLaiXong(moi, r.banGhi);
+  const so = lai.khach.map((k) => k.so);
+  assert.equal(new Set(so).size, so.length);
+  assert.equal(lai.khach.length, 4);
+});

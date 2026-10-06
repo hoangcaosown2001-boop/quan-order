@@ -75,6 +75,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { touch-action: manipulation; cursor: pointer; border: 0; background: none; padding: 0; }
 * { touch-action: manipulation; }
 [hidden] { display: none !important; }
+body.chan-cham #app { pointer-events: none; }
 
 #app {
   position: fixed;

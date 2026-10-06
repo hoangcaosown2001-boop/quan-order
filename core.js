@@ -195,10 +195,11 @@
   }
 
   // Ô nhập tay: số nhỏ hơn 1000 hiểu là nghìn ("600" → 600.000đ)
+  const TIEN_TOI_DA = 100000000; // 100 triệu: chặn số gõ nhầm quá dài
   function hieuSoTien(chuoi) {
-    const n = Number(String(chuoi).replace(/[^\d]/g, ''));
+    const n = Number(String(chuoi == null ? '' : chuoi).replace(/[^\d]/g, '').slice(0, 12));
     if (!n) return 0;
-    return n < 1000 ? n * 1000 : n;
+    return Math.min(TIEN_TOI_DA, n < 1000 ? n * 1000 : n);
   }
 
   /* ---------- Ngày & khách ---------- */
@@ -261,9 +262,17 @@
       const kMoi = ds.find(function (k) { return k.id === banGhi.khachMoiId; });
       if (kMoi && !kMoi.dong.length) ds = ds.filter(function (k) { return k.id !== banGhi.khachMoiId; });
     }
+    let khach = banGhi.khach;
+    let dem = st.demKhach || 0;
+    // Hiếm: số của khách này đã bị khách mới dùng (vừa qua 04:00) → cấp số mới để không trùng
+    const dangDung = new Set(ds.map(function (k) { return k.so; }));
+    if (dangDung.has(khach.so)) {
+      do { dem++; } while (dangDung.has(dem));
+      khach = Object.assign({}, khach, { so: dem });
+    }
     const viTri = Math.min(banGhi.viTri, ds.length);
-    ds.splice(viTri, 0, banGhi.khach);
-    return Object.assign({}, st, { khach: ds, dangChon: banGhi.khach.id });
+    ds.splice(viTri, 0, khach);
+    return Object.assign({}, st, { khach: ds, dangChon: khach.id, demKhach: dem });
   }
 
   /* ---------- Trạng thái app & chuyển đổi phiên bản ---------- */
@@ -295,12 +304,50 @@
     // Ví dụ sau này: if (st.phienBan < 2) { ...đổi cấu trúc...; st.phienBan = 2; }
     const macDinh = trangThaiMoi(menuMacDinh, now);
     Object.keys(macDinh).forEach(function (k) { if (st[k] === undefined) st[k] = macDinh[k]; });
-    if (!Array.isArray(st.khach)) st.khach = [];
-    st.khach = st.khach.map(function (k) {
-      return Object.assign({ dong: [], lichSu: [], nhanBan: null }, k);
-    });
-    if (!Array.isArray(st.menu.thuTuNhom)) st.menu.thuTuNhom = st.menu.nhom.map(function (n) { return n.id; });
+    lamSach(st);
     return st;
+  }
+
+  // Sửa dữ liệu sai kiểu (giá chữ, số lượng âm, dòng rỗng…) để tổng tiền luôn đúng
+  function soNguyen(v, toiThieu) {
+    const n = Math.round(Number(v));
+    return Number.isFinite(n) && n >= toiThieu ? n : null;
+  }
+  function lamSach(st) {
+    const m = st.menu;
+    if (!Array.isArray(m.nhom)) m.nhom = [];
+    if (!Array.isArray(m.mon)) m.mon = [];
+    m.nhom = m.nhom.filter(function (n) { return n && n.id; }).map(function (n) {
+      return Object.assign({}, n, { ten: String(n.ten || n.id), mau: /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(n.mau) ? n.mau : '#888888' });
+    });
+    const idDaCo = new Set();
+    m.mon = m.mon.filter(function (x) {
+      if (!x || !x.id || idDaCo.has(x.id)) return false;
+      idDaCo.add(x.id);
+      return true;
+    }).map(function (x) {
+      return Object.assign({}, x, { ten: String(x.ten || ''), gia: soNguyen(x.gia, 0) || 0, banChay: !!x.banChay });
+    });
+    if (!Array.isArray(m.thuTuNhom)) m.thuTuNhom = m.nhom.map(function (n) { return n.id; });
+    if (!Array.isArray(st.khach)) st.khach = [];
+    const soDaCo = new Set();
+    st.khach = st.khach.filter(function (k) { return k && k.id; }).map(function (k) {
+      let so = soNguyen(k.so, 1);
+      while (!so || soDaCo.has(so)) so = (so || 0) + 1;
+      soDaCo.add(so);
+      const gop = new Map();
+      (Array.isArray(k.dong) ? k.dong : []).forEach(function (d) {
+        const sl = d && soNguyen(d.soLuong, 1);
+        if (!d || !d.monId || !sl) return;
+        if (gop.has(d.monId)) gop.get(d.monId).soLuong += sl;
+        else gop.set(d.monId, { monId: d.monId, soLuong: sl, ghiChu: d.ghiChu == null ? null : d.ghiChu });
+      });
+      const lichSu = (Array.isArray(k.lichSu) ? k.lichSu : []).filter(function (b) {
+        return b && b.monId && (b.loai === '+' || b.loai === '-');
+      }).slice(-MAX_LICH_SU);
+      return Object.assign({ nhanBan: null }, k, { so: so, dong: Array.from(gop.values()), lichSu: lichSu });
+    });
+    st.demKhach = soNguyen(st.demKhach, 0) || 0;
   }
 
   // Mở app: chuyển đổi, sang ngày mới thì bỏ khách trống, luôn có ít nhất 1 khách.

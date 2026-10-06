@@ -42,6 +42,7 @@
 - **Xóa** công thức/món/nhóm và **khôi phục** đều hỏi xác nhận; chạm món thì không bao giờ hỏi.
 - **Công thức MẪU** dùng ảnh vẽ minh họa (không phải ảnh thật). Xóa trong ⚙ → **Xóa dữ liệu mẫu**.
 - **Ảnh** được thu nhỏ trên máy (cạnh dài 1200px, JPEG 80%) và tạo thêm ảnh nhỏ 400px cho lưới; ảnh lưu trong bộ nhớ IndexedDB của app.
+- **An toàn dữ liệu:** dữ liệu sai kiểu được tự sửa khi mở app; nếu dữ liệu trên máy bị hỏng, bản cũ được cất riêng (không ghi đè) và app vẫn mở được; lỗi bất ngờ chỉ hiện thông báo nhỏ, app chạy tiếp. Sau khi đóng bảng thanh toán, app bỏ qua chạm trong 0,35 giây để chạm đúp "Xong" không bấm nhầm nút bên dưới.
 - **Cập nhật app:** khi có bản mới, app hiện "Đã có bản mới · Tải lại"; dữ liệu không bị mất.
 
 ## Cho người sửa code
