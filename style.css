@@ -135,6 +135,7 @@ button { touch-action: manipulation; cursor: pointer; border: 0; background: non
   background: var(--be-mat); border: 1.5px solid var(--vien); font-size: 15px; font-weight: 600;
   white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
 }
+.chip .ten-chip { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
 .chip .tien-chip { font-weight: 800; font-variant-numeric: tabular-nums; }
 .chip.chon { background: var(--chip-chon); color: var(--chip-chon-chu); border-color: var(--chip-chon); }
 .chip .xoa-chip {
@@ -268,6 +269,15 @@ body:not(.o-order) .chi-order { display: none; }
 .nut.rong { flex: 1; }
 .nut.nho { min-height: 44px; font-size: 15px; border-radius: 12px; }
 .nut:disabled { opacity: .4; }
+
+/* Bảng nhãn khách A1–D10 */
+.bang-nhan { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.bang-nhan button {
+  min-height: 46px; border-radius: 12px; background: var(--be-mat-2); font-size: 19px; font-weight: 800;
+  border: 2px solid transparent; font-variant-numeric: tabular-nums;
+}
+.bang-nhan button.chon { background: var(--nhan); color: var(--nhan-chu); }
+.bang-nhan button.dang-dung { opacity: .45; border-color: var(--vien); border-style: dashed; }
 
 /* Thanh toán */
 .tt-dau { display: flex; justify-content: space-between; align-items: baseline; }

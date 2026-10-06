@@ -237,3 +237,18 @@ test('nhắc sao lưu sau 14 ngày; kiểm tra file sao lưu', () => {
   assert.ok(C.kiemTraSaoLuu({}));
   assert.equal(C.kiemTraSaoLuu({ ung: 'quan-order', menu: MENU, congThuc: [], anh: [] }), null);
 });
+
+test('đổi tên khách; để trống thì về "Khách N"', () => {
+  let st = trangThai();
+  const id = st.dangChon;
+  st = C.doiTenKhach(st, id, '  Anh   Tú áo xanh ');
+  assert.equal(C.tenKhach(C.timKhach(st, id)), 'Anh Tú áo xanh');
+  st = C.doiTenKhach(st, id, 'x'.repeat(40));
+  assert.equal(C.tenKhach(C.timKhach(st, id)).length, 24, 'tối đa 24 ký tự');
+  st = C.doiTenKhach(st, id, '   ');
+  assert.equal(C.tenKhach(C.timKhach(st, id)), 'Khách 1');
+  // số khách vẫn tăng bình thường
+  st = C.doiTenKhach(st, id, 'Bàn ngoài');
+  st = C.taoKhach(st, SANG + 1);
+  assert.equal(C.tenKhach(st.khach[1]), 'Khách 2');
+});

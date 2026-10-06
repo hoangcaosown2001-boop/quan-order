@@ -6,7 +6,7 @@
   'use strict';
 
   const C = window.Core;
-  const PHIEN_BAN_APP = '1.0.0';
+  const PHIEN_BAN_APP = '1.0.1';
   const KHOA = 'quanOrder.trangThai';
   const KHOA_CT = 'quanOrder.congThuc';
   const BANG_MAU = ['#1F6FD1', '#8A5A3B', '#F3E5C8', '#F4B400', '#F48FB1', '#C43D22',
@@ -210,11 +210,11 @@
     sheetDangMo = { ve: ve, khiDong: khiDong };
     const nd = $('#noiDungSheet');
     nd.textContent = '';
-    nd.scrollTop = 0;
-    ve(nd);
     $('#nenSheet').hidden = false;
     $('#sheet').hidden = false;
     $('#sheet').style.transform = '';
+    nd.scrollTop = 0;
+    ve(nd); // vẽ sau khi hiện để ô nhập focus được (bật bàn phím ngay)
   }
   function veLaiSheet() {
     if (!sheetDangMo) return;
@@ -354,7 +354,7 @@
       const chip = el('button', {
         type: 'button', class: 'chip' + (chon ? ' chon' : ''), 'data-id': k.id, role: 'tab',
         'aria-selected': chon ? 'true' : 'false',
-      }, el('span', { text: C.tenKhach(k) + ' ·' }),
+      }, el('span', { class: 'ten-chip', text: C.tenKhach(k) }), el('span', { text: '·' }),
       el('span', { class: 'tien-chip', text: C.dinhDangK(C.tongTien(k, st.menu)) }));
       if (chon && !k.dong.length && st.khach.length > 1) {
         chip.append(el('span', { class: 'xoa-chip', 'data-xoa': k.id, 'aria-label': 'Xóa khách trống', text: '✕' }));
@@ -401,11 +401,43 @@
     const x = e.target.closest('[data-xoa]');
     if (x) { xongKhach(x.dataset.xoa); return; }
     const chip = e.target.closest('.chip');
-    if (!chip || chip.dataset.id === st.dangChon) return;
+    if (!chip) return;
+    if (chip.dataset.id === st.dangChon) { suaTenKhach(chip.dataset.id); return; }
     st = C.chonKhach(st, chip.dataset.id);
     veOrder(true);
     luuSau();
   });
+
+  // Chạm chip khách đang chọn → bảng nhãn A1–D10, chạm 1 ô là đặt tên luôn
+  const COT_NHAN = ['A', 'B', 'C', 'D'];
+  function suaTenKhach(id) {
+    const k = C.timKhach(st, id);
+    if (!k) return;
+    const datTen = function (ten) {
+      st = C.doiTenKhach(st, id, ten);
+      dongSheet();
+      veOrder(true);
+      luuSau();
+    };
+    moSheet(function (nd) {
+      const dangDung = new Set(st.khach.filter((x) => x.id !== id).map((x) => x.ten).filter(Boolean));
+      const bang = el('div', { class: 'bang-nhan' });
+      for (let dong = 1; dong <= 10; dong++) {
+        COT_NHAN.forEach(function (cot) {
+          const nhan = cot + dong;
+          bang.append(el('button', {
+            type: 'button', 'data-nhan': nhan, text: nhan,
+            class: (k.ten === nhan ? 'chon' : '') + (dangDung.has(nhan) ? ' dang-dung' : ''),
+            onclick: () => datTen(nhan),
+          }));
+        });
+      }
+      nd.append(el('h2', { text: 'Chọn tên cho ' + C.tenKhach(k) }), bang,
+        el('div', { class: 'sheet-chan' },
+          el('button', { type: 'button', class: 'nut rong', text: 'Đóng', onclick: dongSheet }),
+          el('button', { type: 'button', class: 'nut rong', id: 'nutBoTen', text: 'Bỏ tên', disabled: !k.ten, onclick: () => datTen('') })));
+    });
+  }
 
   $('#nutThemKhach').addEventListener('click', function () {
     st = C.taoKhach(st, Date.now());

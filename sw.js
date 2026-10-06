@@ -1,7 +1,7 @@
 /* Service worker: lưu sẵn toàn bộ app để chạy khi mất mạng.
  * Mỗi lần sửa app, tăng PHIEN_BAN để điện thoại tải bản mới.
  * Dữ liệu (order, menu, công thức, ảnh) nằm ở localStorage/IndexedDB nên không bị mất khi cập nhật. */
-const PHIEN_BAN = 'quan-order-v1.0.0';
+const PHIEN_BAN = 'quan-order-v1.0.1';
 const TEP = [
   './',
   './index.html',

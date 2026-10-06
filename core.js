@@ -95,8 +95,17 @@
 
   /* ---------- Order của 1 khách ---------- */
 
+  // Tên tự đặt (nếu có), không thì "Khách N"
   function tenKhach(k) {
-    return 'Khách ' + k.so;
+    return (k.ten && String(k.ten).trim()) || 'Khách ' + k.so;
+  }
+
+  // Đổi tên khách; để trống thì quay về "Khách N"
+  function doiTenKhach(st, id, ten) {
+    const sach = String(ten == null ? '' : ten).replace(/\s+/g, ' ').trim().slice(0, 24);
+    return Object.assign({}, st, {
+      khach: st.khach.map(function (k) { return k.id === id ? Object.assign({}, k, { ten: sach || null }) : k; }),
+    });
   }
 
   // Đổi số lượng 1 món (không ghi lịch sử). Về 0 thì xóa dòng.
@@ -346,7 +355,7 @@
     dinhDangSo: dinhDangSo, dinhDangTien: dinhDangTien, dinhDangK: dinhDangK,
     timMon: timMon, nhomVaMon: nhomVaMon, taoIdMoi: taoIdMoi,
     doSang: doSang, tuongPhan: tuongPhan, mauChu: mauChu,
-    tenKhach: tenKhach, themMon: themMon, botMon: botMon, hoanTac: hoanTac, coTheHoanTac: coTheHoanTac,
+    tenKhach: tenKhach, doiTenKhach: doiTenKhach, themMon: themMon, botMon: botMon, hoanTac: hoanTac, coTheHoanTac: coTheHoanTac,
     soLuongMon: soLuongMon, soLy: soLy, tongTien: tongTien, tomTat: tomTat,
     menhGiaGoiY: menhGiaGoiY, tienThua: tienThua, hieuSoTien: hieuSoTien,
     ngayKinhDoanh: ngayKinhDoanh, timKhach: timKhach, taoKhach: taoKhach, chonKhach: chonKhach,

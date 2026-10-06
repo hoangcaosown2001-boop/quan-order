@@ -276,6 +276,22 @@ for (const may of MAY) {
   const sauTai = await p.evaluate(() => JSON.stringify(window.__quan.trangThai().khach.map((k) => k.dong)));
   kiem(truocTai === sauTai && (await chipChon(p)).startsWith('Khách 2') && (await p.textContent('#soTong')) === '65.000đ', 'Tải lại trang → order còn nguyên', `${await chipChon(p)} ${await p.textContent('#soTong')}`);
 
+  // Chạm chip khách đang chọn → bảng nhãn A1–D10; chạm 1 ô là đặt tên
+  await p.tap('.chip.chon');
+  await p.waitForSelector('.bang-nhan');
+  const nhan = await p.$$eval('.bang-nhan button', (b) => b.map((x) => x.textContent));
+  kiem(nhan.length === 40 && nhan.slice(0, 4).join() === 'A1,B1,C1,D1' && nhan.at(-1) === 'D10', 'Chạm chip khách → hiện 4 cột A–D × 10 dòng', `${nhan.length} ô: ${nhan.slice(0, 4).join(' ')} … ${nhan.at(-1)}`);
+  await p.waitForTimeout(150);
+  await p.screenshot({ path: path.join(ANH, '8-chon-ten-khach-iphone15.png') });
+  await p.tap('.bang-nhan [data-nhan="B3"]');
+  kiem((await p.textContent('.chip.chon .ten-chip')) === 'B3' && await p.isHidden('#sheet'), 'Chạm "B3" → khách thành B3 ngay (1 chạm)', await p.textContent('.chip.chon'));
+  await p.reload();
+  await p.waitForSelector('.o-mon');
+  kiem((await p.textContent('.chip.chon .ten-chip')) === 'B3', 'Tên khách còn sau khi tải lại');
+  await p.tap('.chip.chon');
+  await p.tap('#nutBoTen');
+  kiem((await p.textContent('.chip.chon .ten-chip')) === 'Khách 2', '"Bỏ tên" → về "Khách 2"');
+
   // Hoàn lại sau khi Xong nhầm
   await p.tap('#nutTong');
   await p.tap('#nutXong');
