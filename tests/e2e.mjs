@@ -280,7 +280,8 @@ for (const may of MAY) {
   await p.tap('.chip.chon');
   await p.waitForSelector('.bang-nhan');
   const nhan = await p.$$eval('.bang-nhan button', (b) => b.map((x) => x.textContent));
-  kiem(nhan.length === 40 && nhan.slice(0, 4).join() === 'A1,B1,C1,D1' && nhan.at(-1) === 'D10', 'Chạm chip khách → hiện 4 cột A–D × 10 dòng', `${nhan.length} ô: ${nhan.slice(0, 4).join(' ')} … ${nhan.at(-1)}`);
+  kiem(nhan.length === 44 && nhan.slice(0, 4).join() === 'A1,B1,C1,D1' && nhan[39] === 'D10' && nhan.slice(40).join() === 'Take away 1,Take away 2,Take away 3,Take away 4',
+    'Chạm chip khách → 4 cột A–D × 10 dòng + hàng Take away 1–4', `${nhan.length} ô: ${nhan.slice(0, 4).join(' ')} … ${nhan[39]} | ${nhan.slice(40).join(', ')}`);
   await p.waitForTimeout(150);
   await p.screenshot({ path: path.join(ANH, '8-chon-ten-khach-iphone15.png') });
   await p.tap('.bang-nhan [data-nhan="B3"]');
@@ -288,6 +289,9 @@ for (const may of MAY) {
   await p.reload();
   await p.waitForSelector('.o-mon');
   kiem((await p.textContent('.chip.chon .ten-chip')) === 'B3', 'Tên khách còn sau khi tải lại');
+  await p.tap('.chip.chon');
+  await p.tap('.bang-nhan [data-nhan="Take away 2"]');
+  kiem((await p.textContent('.chip.chon .ten-chip')) === 'Take away 2', 'Chạm "Take away 2" → khách thành Take away 2');
   await p.tap('.chip.chon');
   await p.tap('#nutBoTen');
   kiem((await p.textContent('.chip.chon .ten-chip')) === 'Khách 2', '"Bỏ tên" → về "Khách 2"');

@@ -276,6 +276,7 @@ body:not(.o-order) .chi-order { display: none; }
   min-height: 46px; border-radius: 12px; background: var(--be-mat-2); font-size: 19px; font-weight: 800;
   border: 2px solid transparent; font-variant-numeric: tabular-nums;
 }
+.bang-nhan button.mang-di { font-size: 15px; line-height: 1.1; padding: 2px 4px; margin-top: 6px; }
 .bang-nhan button.chon { background: var(--nhan); color: var(--nhan-chu); }
 .bang-nhan button.dang-dung { opacity: .45; border-color: var(--vien); border-style: dashed; }
 

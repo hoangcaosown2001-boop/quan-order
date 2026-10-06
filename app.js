@@ -6,7 +6,7 @@
   'use strict';
 
   const C = window.Core;
-  const PHIEN_BAN_APP = '1.0.1';
+  const PHIEN_BAN_APP = '1.0.2';
   const KHOA = 'quanOrder.trangThai';
   const KHOA_CT = 'quanOrder.congThuc';
   const BANG_MAU = ['#1F6FD1', '#8A5A3B', '#F3E5C8', '#F4B400', '#F48FB1', '#C43D22',
@@ -422,16 +422,16 @@
     moSheet(function (nd) {
       const dangDung = new Set(st.khach.filter((x) => x.id !== id).map((x) => x.ten).filter(Boolean));
       const bang = el('div', { class: 'bang-nhan' });
-      for (let dong = 1; dong <= 10; dong++) {
-        COT_NHAN.forEach(function (cot) {
-          const nhan = cot + dong;
-          bang.append(el('button', {
-            type: 'button', 'data-nhan': nhan, text: nhan,
-            class: (k.ten === nhan ? 'chon' : '') + (dangDung.has(nhan) ? ' dang-dung' : ''),
-            onclick: () => datTen(nhan),
-          }));
-        });
-      }
+      const oNhan = function (nhan, lop) {
+        bang.append(el('button', {
+          type: 'button', 'data-nhan': nhan, text: nhan,
+          class: (lop || '') + (k.ten === nhan ? ' chon' : '') + (dangDung.has(nhan) ? ' dang-dung' : ''),
+          onclick: () => datTen(nhan),
+        }));
+      };
+      for (let dong = 1; dong <= 10; dong++) COT_NHAN.forEach((cot) => oNhan(cot + dong));
+      // Hàng cuối: khách mang đi
+      for (let i = 1; i <= 4; i++) oNhan('Take away ' + i, 'mang-di');
       nd.append(el('h2', { text: 'Chọn tên cho ' + C.tenKhach(k) }), bang,
         el('div', { class: 'sheet-chan' },
           el('button', { type: 'button', class: 'nut rong', text: 'Đóng', onclick: dongSheet }),
