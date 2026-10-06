@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Order quán</title>
+  <meta name="description" content="Order theo khách và sổ công thức cho quán">
+  <meta name="theme-color" content="#1F6FD1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Order">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="canhBao" class="canh-bao" hidden></div>
+
+    <!-- ===== MÀN ORDER ===== -->
+    <main id="manOrder" class="man hien" data-man="order">
+      <button id="nutTong" class="tong" type="button" aria-label="Thanh toán">
+        <span class="tong-dong">
+          <span id="soTong" class="so-tong">0đ</span>
+          <span id="nhanThu" class="nhan-thu">Thu tiền ›</span>
+        </span>
+        <span id="tomTat" class="tom-tat">Chạm món để thêm</span>
+      </button>
+
+      <div class="dai-khach">
+        <div id="dsKhach" class="ds-khach" role="tablist" aria-label="Khách"></div>
+        <button id="nutThemKhach" class="nut-them-khach" type="button">+ Khách</button>
+      </div>
+
+      <div id="luoiMenu" class="luoi-menu" aria-label="Menu"></div>
+    </main>
+
+    <!-- ===== MÀN CÔNG THỨC ===== -->
+    <section id="manCongThuc" class="man" data-man="congthuc">
+      <div id="bannerSaoLuu1" class="banner-sao-luu" hidden></div>
+      <div class="ct-dau">
+        <input id="oTim" class="o-tim" type="search" placeholder="Tìm món hoặc nguyên liệu…" autocomplete="off" enterkeyhint="search">
+      </div>
+      <div id="locNhom" class="loc-nhom"></div>
+      <div id="luoiCongThuc" class="luoi-ct"></div>
+      <button id="nutThemCT" class="fab" type="button" aria-label="Thêm công thức">+</button>
+    </section>
+
+    <!-- ===== MÀN CÀI ĐẶT ===== -->
+    <section id="manCaiDat" class="man" data-man="caidat">
+      <div id="noiDungCaiDat" class="cai-dat"></div>
+    </section>
+
+    <!-- ===== THANH DƯỚI ===== -->
+    <nav class="thanh-duoi">
+      <button id="nutHoanTac" class="nut-hd chi-order" type="button" disabled>
+        <span class="bieu-tuong">↩</span><span>Hoàn tác</span>
+      </button>
+      <button id="nutDanhSach" class="nut-hd chi-order" type="button">
+        <span class="bieu-tuong">☰ <b id="soLyDS">0</b></span><span>Danh sách</span>
+      </button>
+      <button class="tab dang-mo" data-tab="order" type="button">
+        <span class="bieu-tuong">☕</span><span>Order</span>
+      </button>
+      <button class="tab" data-tab="congthuc" type="button">
+        <span class="bieu-tuong">📖</span><span>Công thức</span>
+      </button>
+      <button class="tab tab-nho" data-tab="caidat" type="button" aria-label="Cài đặt">
+        <span class="bieu-tuong">⚙<i id="chamNhac" class="cham-nhac" hidden></i></span><span>Cài đặt</span>
+      </button>
+    </nav>
+
+    <div id="vungThongBao" class="vung-thong-bao" aria-live="polite"></div>
+  </div>
+
+  <!-- Bottom sheet dùng chung -->
+  <div id="nenSheet" class="nen-sheet" hidden></div>
+  <div id="sheet" class="sheet" role="dialog" aria-modal="true" hidden>
+    <div class="tay-keo" aria-hidden="true"></div>
+    <div id="noiDungSheet" class="noi-dung-sheet"></div>
+  </div>
+
+  <!-- Trang phủ toàn màn (chi tiết / sửa công thức) -->
+  <div id="trangPhu" class="trang-phu" hidden></div>
+  <!-- Xem ảnh toàn màn -->
+  <div id="xemAnh" class="xem-anh" hidden></div>
+
+  <script src="./menu.js"></script>
+  <script src="./core.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
