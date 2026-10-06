@@ -12,6 +12,7 @@
 
   const PHIEN_BAN_DU_LIEU = 1;
   const MENH_GIA = [10000, 20000, 50000, 100000, 200000, 500000];
+  const MENH_GIA_BANG = [50000, 100000, 200000, 500000]; // bảng nút ở màn thanh toán
   const MAX_LICH_SU = 50;
   const LECH_GIO_VN = 7; // Asia/Ho_Chi_Minh = UTC+7, không có giờ mùa hè
   const GIO_DOI_NGAY = 4; // ngày mới bắt đầu lúc 04:00 sáng
@@ -183,6 +184,11 @@
     return MENH_GIA.filter(function (m) { return m > tong; });
   }
 
+  // Bấm thêm 1 tờ: cộng dồn (50k + 50k = 100k)
+  function congMenhGia(dangCo, menhGia) {
+    return (dangCo || 0) + menhGia;
+  }
+
   // Tiền thối lại (âm = khách đưa thiếu)
   function tienThua(tong, khachDua) {
     return khachDua - tong;
@@ -351,13 +357,13 @@
   }
 
   return {
-    PHIEN_BAN_DU_LIEU: PHIEN_BAN_DU_LIEU, MENH_GIA: MENH_GIA, MAX_LICH_SU: MAX_LICH_SU,
+    PHIEN_BAN_DU_LIEU: PHIEN_BAN_DU_LIEU, MENH_GIA: MENH_GIA, MENH_GIA_BANG: MENH_GIA_BANG, MAX_LICH_SU: MAX_LICH_SU,
     dinhDangSo: dinhDangSo, dinhDangTien: dinhDangTien, dinhDangK: dinhDangK,
     timMon: timMon, nhomVaMon: nhomVaMon, taoIdMoi: taoIdMoi,
     doSang: doSang, tuongPhan: tuongPhan, mauChu: mauChu,
     tenKhach: tenKhach, doiTenKhach: doiTenKhach, themMon: themMon, botMon: botMon, hoanTac: hoanTac, coTheHoanTac: coTheHoanTac,
     soLuongMon: soLuongMon, soLy: soLy, tongTien: tongTien, tomTat: tomTat,
-    menhGiaGoiY: menhGiaGoiY, tienThua: tienThua, hieuSoTien: hieuSoTien,
+    menhGiaGoiY: menhGiaGoiY, congMenhGia: congMenhGia, tienThua: tienThua, hieuSoTien: hieuSoTien,
     ngayKinhDoanh: ngayKinhDoanh, timKhach: timKhach, taoKhach: taoKhach, chonKhach: chonKhach,
     capNhatKhach: capNhatKhach, xongKhach: xongKhach, hoanLaiXong: hoanLaiXong,
     saoMenu: saoMenu, trangThaiMoi: trangThaiMoi, chuyenDoi: chuyenDoi, khoiTao: khoiTao,

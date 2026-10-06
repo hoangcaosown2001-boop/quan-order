@@ -284,16 +284,26 @@ body:not(.o-order) .chi-order { display: none; }
 .tt-dau { display: flex; justify-content: space-between; align-items: baseline; }
 .tt-tong { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .tt-ten { color: var(--chu-phu); font-weight: 700; }
-.menh-gia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+.menh-gia { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 8px; }
 .menh-gia button {
-  min-height: 58px; border-radius: 14px; background: var(--be-mat-2); font-size: 22px; font-weight: 800;
+  position: relative; min-height: 62px; border-radius: 14px; background: var(--be-mat-2); font-size: 22px; font-weight: 800;
   border: 2px solid transparent; font-variant-numeric: tabular-nums;
 }
+.menh-gia .lan {
+  position: absolute; top: -7px; right: -5px; min-width: 26px; height: 22px; line-height: 22px; padding: 0 6px;
+  border-radius: 11px; background: var(--nhan); color: var(--nhan-chu); font-size: 13px; font-weight: 900;
+}
+.menh-gia .lan:empty { display: none; }
+.hang-nhap-tien { display: flex; gap: 8px; align-items: stretch; margin-bottom: 10px; }
+.hang-nhap-tien .o-nhap-tien { flex: 1; min-width: 0; font-variant-numeric: tabular-nums; }
+.hang-nhap-tien .nut { min-height: 54px; flex: none; }
+.hang-nhap-tien #nutNhapLai { width: 54px; font-size: 22px; padding: 0; }
 .menh-gia button.chon { border-color: var(--nhan); background: color-mix(in srgb, var(--nhan) 18%, var(--be-mat)); }
 .o-nhap-tien {
   width: 100%; min-height: 54px; border-radius: 14px; border: 2px solid var(--vien); background: var(--be-mat);
   padding: 0 14px; font-size: 22px; font-weight: 700;
 }
+.o-nhap-tien::placeholder { font-size: 15px; font-weight: 500; }
 .goi-y-nhap { color: var(--chu-phu); font-size: 14px; margin-top: 4px; min-height: 18px; }
 .tien-thoi {
   min-height: 64px; display: flex; align-items: center; justify-content: center; text-align: center;

@@ -115,6 +115,16 @@ test('mệnh giá chỉ hiện loại LỚN HƠN tổng', () => {
   assert.deepEqual(C.menhGiaGoiY(620000), []);
 });
 
+test('bấm mệnh giá cộng dồn: 2 lần 50k = 100k, 2 lần 100k = 200k', () => {
+  assert.deepEqual(C.MENH_GIA_BANG, [50000, 100000, 200000, 500000]);
+  let dua = 0;
+  dua = C.congMenhGia(dua, 50000);
+  dua = C.congMenhGia(dua, 50000);
+  assert.equal(dua, 100000);
+  assert.equal(C.congMenhGia(C.congMenhGia(0, 100000), 100000), 200000);
+  assert.equal(C.tienThua(193000, C.congMenhGia(dua, 100000)), 7000);
+});
+
 test('tiền thừa đúng', () => {
   assert.equal(C.tienThua(125000, 200000), 75000);
   assert.equal(C.tienThua(25000, 25000), 0);

@@ -6,7 +6,7 @@
   'use strict';
 
   const C = window.Core;
-  const PHIEN_BAN_APP = '1.0.3';
+  const PHIEN_BAN_APP = '1.0.4';
   const KHOA = 'quanOrder.trangThai';
   const KHOA_CT = 'quanOrder.congThuc';
   const BANG_MAU = ['#1F6FD1', '#8A5A3B', '#F3E5C8', '#F4B400', '#F48FB1', '#C43D22',
@@ -504,26 +504,38 @@
 
   /* ---------- Thanh toán ---------- */
 
+  // Thanh toán: bấm mệnh giá để cộng dồn (2 lần 50k = 100k) hoặc tự gõ số tiền khách đưa
   function moThanhToan() {
     const k = khachHienTai();
     if (!k.dong.length) return;
     const tong = C.tongTien(k, st.menu);
-    const menhGia = C.menhGiaGoiY(tong);
+    let khachDua = 0;
+    const soLan = new Map(); // mệnh giá → số lần bấm
 
     moSheet(function (nd) {
-      const oThoi = el('div', { class: 'tien-thoi cho', id: 'tienThoi', text: 'Chọn tiền khách đưa' });
-      const nutMG = [];
+      const oThoi = el('div', { class: 'tien-thoi cho', id: 'tienThoi', text: 'Chọn hoặc nhập tiền khách đưa' });
+      const oNhap = el('input', {
+        class: 'o-nhap-tien', id: 'oKhachDua', inputmode: 'numeric', pattern: '[0-9.]*', autocomplete: 'off',
+        placeholder: 'Tự nhập (150 = 150.000đ)', 'aria-label': 'Tiền khách đưa', enterkeyhint: 'done',
+      });
+      const nutMG = new Map();
 
-      function chon(nut, khachDua) {
-        nutMG.forEach((b) => b.classList.toggle('chon', b === nut));
-        hienThoi(khachDua);
-      }
-      function hienThoi(khachDua) {
-        if (khachDua == null) { oThoi.className = 'tien-thoi cho'; oThoi.textContent = 'Chọn tiền khách đưa'; return; }
+      function hienThoi() {
+        nutMG.forEach(function (b, mg) {
+          const n = soLan.get(mg) || 0;
+          b.classList.toggle('chon', n > 0);
+          b.querySelector('.lan').textContent = n > 1 ? '×' + n : '';
+        });
+        if (!khachDua) { oThoi.className = 'tien-thoi cho'; oThoi.textContent = 'Chọn hoặc nhập tiền khách đưa'; return; }
         const thoi = C.tienThua(tong, khachDua);
         if (thoi === 0) { oThoi.className = 'tien-thoi'; oThoi.textContent = 'Không thối'; }
         else if (thoi > 0) { oThoi.className = 'tien-thoi'; oThoi.textContent = 'Thối lại: ' + C.dinhDangTien(thoi); }
         else { oThoi.className = 'tien-thoi thieu'; oThoi.textContent = 'Còn thiếu: ' + C.dinhDangTien(-thoi); }
+      }
+      function datTuNut(soTien) {
+        khachDua = soTien;
+        oNhap.value = soTien ? C.dinhDangSo(soTien) : '';
+        hienThoi();
       }
 
       nd.append(el('div', { class: 'tt-dau' },
@@ -531,30 +543,28 @@
         el('span', { class: 'tt-tong', text: C.dinhDangTien(tong) })));
 
       const luoi = el('div', { class: 'menh-gia' });
-      menhGia.forEach(function (mg) {
-        const b = el('button', { type: 'button', 'data-mg': mg, text: C.dinhDangK(mg) });
-        b.addEventListener('click', () => chon(b, mg));
-        nutMG.push(b);
+      C.MENH_GIA_BANG.forEach(function (mg) {
+        const b = el('button', { type: 'button', 'data-mg': mg }, el('span', { text: C.dinhDangK(mg) }), el('span', { class: 'lan' }));
+        b.addEventListener('click', function () {
+          soLan.set(mg, (soLan.get(mg) || 0) + 1);
+          datTuNut(C.congMenhGia(khachDua, mg));
+        });
+        nutMG.set(mg, b);
         luoi.append(b);
       });
-      const dung = el('button', { type: 'button', 'data-mg': 'dung', text: 'Đúng tiền', style: 'font-size:18px' });
-      dung.addEventListener('click', () => chon(dung, tong));
-      nutMG.push(dung);
-      luoi.append(dung);
       nd.append(luoi);
 
-      // Tổng ≥ 500k: thêm ô nhập số tiền khách đưa
-      if (!menhGia.length) {
-        const goiY = el('div', { class: 'goi-y-nhap', text: 'Nhập 600 = 600.000đ' });
-        const o = el('input', { class: 'o-nhap-tien', inputmode: 'numeric', pattern: '[0-9]*', placeholder: 'Khách đưa…', 'aria-label': 'Số tiền khách đưa' });
-        o.addEventListener('input', function () {
-          const n = C.hieuSoTien(o.value);
-          goiY.textContent = n ? 'Khách đưa: ' + C.dinhDangTien(n) : 'Nhập 600 = 600.000đ';
-          nutMG.forEach((b) => b.classList.remove('chon'));
-          hienThoi(n ? n : null);
-        });
-        nd.append(o, goiY);
-      }
+      oNhap.addEventListener('input', function () {
+        soLan.clear();
+        khachDua = C.hieuSoTien(oNhap.value);
+        hienThoi();
+      });
+      oNhap.addEventListener('keydown', (e) => { if (e.key === 'Enter') oNhap.blur(); });
+
+      nd.append(el('div', { class: 'hang-nhap-tien' },
+        oNhap,
+        el('button', { type: 'button', class: 'nut nho', 'data-mg': 'dung', text: 'Đúng tiền', onclick: () => { soLan.clear(); datTuNut(tong); } }),
+        el('button', { type: 'button', class: 'nut nho', id: 'nutNhapLai', 'aria-label': 'Nhập lại', text: '↺', onclick: () => { soLan.clear(); datTuNut(0); } })));
 
       nd.append(oThoi);
       nd.append(el('div', { class: 'sheet-chan' },
