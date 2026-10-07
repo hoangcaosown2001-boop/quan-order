@@ -123,15 +123,14 @@ body.dang-hot .dau-order { background: color-mix(in srgb, #C2410C 10%, transpare
   font-size: 40px; line-height: 44px; font-weight: 800; letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
 }
-.tong.trong .tom-tat {
+.tom-tat {
   display: block; font-size: 15px; line-height: 20px; height: 20px; color: var(--chu-phu);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;
 }
 
 /* ===== Dải khách ===== */
 .dai-khach {
-  flex: none; display: flex; align-items: center; gap: 6px; padding: 4px 8px 6px 8px;
-  border-bottom: 1px solid var(--vien);
+  flex: none; display: flex; align-items: center; gap: 6px; padding: 4px 8px 4px 8px;
 }
 .ds-khach {
   flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden;
@@ -156,6 +155,16 @@ body.dang-hot .dau-order { background: color-mix(in srgb, #C2410C 10%, transpare
   background: var(--nhan); color: var(--nhan-chu);
 }
 
+/* ===== Less sugar / Less ice ===== */
+.hang-ghi-chu { flex: none; display: flex; gap: 6px; padding: 5px 8px; border-bottom: 1px solid var(--vien); }
+.hang-ghi-chu button {
+  flex: 1; height: 44px; border-radius: 12px; font-size: 15px; font-weight: 800;
+  background: var(--be-mat); border: 1.5px solid var(--vien); color: var(--chu-phu);
+}
+.hang-ghi-chu button.bat { background: #8A4B00; border-color: #8A4B00; color: #fff; box-shadow: 0 0 0 2px #8A4B0055; }
+.hang-ghi-chu button:disabled { opacity: .35; }
+.tag-kieu.gc { background: #8A4B00; }
+
 /* ===== Lưới menu ===== */
 .luoi-menu {
   flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
@@ -174,7 +183,7 @@ body.dang-hot .dau-order { background: color-mix(in srgb, #C2410C 10%, transpare
 .nhom-tieu-de i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
 .nhom-luoi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
 .o-mon {
-  position: relative; min-height: 58px; border-radius: 10px; padding: 5px 6px 4px;
+  position: relative; min-height: 56px; border-radius: 10px; padding: 5px 6px 4px;
   text-align: left; display: flex; flex-direction: column; justify-content: space-between;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   overflow: hidden;
@@ -188,7 +197,7 @@ body.dang-hot .dau-order { background: color-mix(in srgb, #C2410C 10%, transpare
 .o-mon .ten.nho2 { font-size: 11.5px; line-height: 14px; }
 .o-mon .ten.ngat { overflow-wrap: anywhere; }
 .o-mon .gia { font-size: 12px; line-height: 14px; font-weight: 600; opacity: .85; }
-.o-mon.ban-chay { grid-column: span 2; min-height: 70px; padding: 7px 10px 6px; }
+.o-mon.ban-chay { grid-column: span 2; min-height: 64px; padding: 7px 10px 6px; }
 .o-mon.ban-chay .ten { font-size: 19px; line-height: 22px; font-weight: 800; }
 .o-mon.ban-chay .gia { font-size: 14px; }
 .o-mon .hh { position: absolute; bottom: 4px; right: 4px; display: flex; gap: 3px; }

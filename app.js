@@ -6,7 +6,7 @@
   'use strict';
 
   const C = window.Core;
-  const PHIEN_BAN_APP = '1.1.0';
+  const PHIEN_BAN_APP = '1.2.0';
   const KHOA = 'quanOrder.trangThai';
   const KHOA_CT = 'quanOrder.congThuc';
   const BANG_MAU = ['#1F6FD1', '#8A5A3B', '#F3E5C8', '#F4B400', '#F48FB1', '#C43D22',
@@ -340,7 +340,7 @@
     }
   }
   function huyHieuMon(o, k, id) {
-    const nong = C.soLuongDong(k, id, 'hot');
+    const nong = C.soLuongKieu(k, id, 'hot');
     datHuyHieu(o, C.soLuongMon(k, id) - nong, nong);
   }
 
@@ -358,14 +358,42 @@
       b.setAttribute('aria-checked', chon ? 'true' : 'false');
     });
     document.body.classList.toggle('dang-hot', st.kieu === 'hot');
+    // Less sugar / Less ice
+    $('#nutItDuong').classList.toggle('bat', !!st.itDuong);
+    $('#nutItDuong').setAttribute('aria-pressed', st.itDuong ? 'true' : 'false');
+    $('#nutItDa').classList.toggle('bat', !!st.itDa);
+    $('#nutItDa').setAttribute('aria-pressed', st.itDa ? 'true' : 'false');
+    $('#nutItDa').disabled = st.kieu === 'hot'; // ly nóng không có đá
   }
   $('#chonKieu').addEventListener('click', function (e) {
     const b = e.target.closest('button');
     if (!b || b.dataset.kieu === st.kieu) return;
     st = Object.assign({}, st, { kieu: b.dataset.kieu });
+    if (st.kieu === 'hot') st.itDa = false;
     veKieu();
     luuSau();
   });
+  document.querySelectorAll('.hang-ghi-chu button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      const sua = {};
+      sua[b.dataset.gc] = !st[b.dataset.gc];
+      st = Object.assign({}, st, sua);
+      veKieu();
+      luuSau();
+    });
+  });
+
+  // Ly sắp chạm sẽ là: Ice/Hot + less sugar/less ice đang bật
+  function bienTheHienTai() {
+    return { kieu: st.kieu, itDuong: !!st.itDuong, itDa: !!st.itDa };
+  }
+
+  // Chuyển / thêm / xong khách: tắt less sugar, less ice để khỏi ghi nhầm cho khách sau
+  function tatGhiChu() {
+    if (!st.itDuong && !st.itDa) return;
+    st = Object.assign({}, st, { itDuong: false, itDa: false });
+    veKieu();
+  }
 
   // Tổng tiền + tóm tắt + nút Hoàn tác/Danh sách
   function veTong() {
@@ -428,7 +456,7 @@
     const o = e.target.closest('.o-mon');
     if (!o) return;
     const id = o.dataset.mon;
-    const k = C.themMon(khachHienTai(), id, st.kieu);
+    const k = C.themMon(khachHienTai(), id, bienTheHienTai());
     st = C.capNhatKhach(st, k);
     huyHieuMon(o, k, id);
     veTong();
@@ -444,6 +472,7 @@
     if (!chip) return;
     if (chip.dataset.id === st.dangChon) { suaTenKhach(chip.dataset.id); return; }
     st = C.chonKhach(st, chip.dataset.id);
+    tatGhiChu();
     veOrder(true);
     luuSau();
   });
@@ -481,6 +510,7 @@
 
   $('#nutThemKhach').addEventListener('click', function () {
     st = C.taoKhach(st, Date.now());
+    tatGhiChu();
     veOrder(true);
     luuSau();
   });
@@ -514,10 +544,12 @@
         nd.append(el('div', { class: 'dong-ds' },
           el('div', { class: 'ten' }, m ? m.ten : 'Món đã xóa',
             d.kieu ? el('span', { class: 'tag-kieu ' + d.kieu, text: d.kieu === 'hot' ? '🔥 Hot' : '🧊 Ice' }) : null,
+            d.itDuong ? el('span', { class: 'tag-kieu gc', text: 'Less sugar' }) : null,
+            d.itDa ? el('span', { class: 'tag-kieu gc', text: 'Less ice' }) : null,
             el('small', { text: C.dinhDangTien(gia) })),
-          el('button', { type: 'button', class: 'nut-tron', 'aria-label': 'Bớt', text: '−', onclick: () => doiDong(d.monId, d.kieu, -1) }),
+          el('button', { type: 'button', class: 'nut-tron', 'aria-label': 'Bớt', text: '−', onclick: () => doiDong(d.monId, d, -1) }),
           el('span', { class: 'sl', text: d.soLuong }),
-          el('button', { type: 'button', class: 'nut-tron', 'aria-label': 'Thêm', text: '+', onclick: () => doiDong(d.monId, d.kieu, 1) }),
+          el('button', { type: 'button', class: 'nut-tron', 'aria-label': 'Thêm', text: '+', onclick: () => doiDong(d.monId, d, 1) }),
           el('span', { class: 'thanh-tien', text: C.dinhDangTien(gia * d.soLuong) })));
       });
       nd.append(el('div', { class: 'tong-ds' }, el('span', { text: 'Tổng' }), el('span', { text: C.dinhDangTien(C.tongTien(k, st.menu)) })));
@@ -527,9 +559,9 @@
     });
   }
 
-  function doiDong(monId, kieu, delta) {
+  function doiDong(monId, bt, delta) {
     const k = khachHienTai();
-    st = C.capNhatKhach(st, delta > 0 ? C.themMon(k, monId, kieu) : C.botMon(k, monId, kieu));
+    st = C.capNhatKhach(st, delta > 0 ? C.themMon(k, monId, bt) : C.botMon(k, monId, bt));
     capNhatHuyHieu();
     veTong();
     veChipHienTai();
@@ -616,6 +648,7 @@
     if (!k) return;
     const kq = C.xongKhach(st, id, Date.now());
     st = kq.st;
+    tatGhiChu();
     veOrder(true);
     luuSau();
     thongBao((chu || 'Đã xong') + ' ' + C.tenKhach(k), 'Hoàn lại', function () {

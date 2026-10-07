@@ -115,16 +115,24 @@
   function chuanKieu(kieu) {
     return KIEU.indexOf(kieu) >= 0 ? kieu : null;
   }
-  function cungDong(d, monId, kieu) {
-    return d.monId === monId && chuanKieu(d.kieu) === chuanKieu(kieu);
+  // Biến thể của 1 ly: { kieu: 'ice'|'hot'|null, itDuong: bool, itDa: bool }
+  // Cho phép truyền chuỗi 'ice'/'hot' cho gọn. Ly Hot không có "less ice".
+  function chuanBienThe(bt) {
+    if (typeof bt === 'string' || bt == null) bt = { kieu: bt };
+    const kieu = chuanKieu(bt.kieu);
+    return { kieu: kieu, itDuong: !!bt.itDuong, itDa: !!bt.itDa && kieu !== 'hot' };
+  }
+  function cungDong(d, monId, bt) {
+    const a = chuanBienThe(d), b = chuanBienThe(bt);
+    return d.monId === monId && a.kieu === b.kieu && a.itDuong === b.itDuong && a.itDa === b.itDa;
   }
 
-  // Mỗi dòng order là 1 cặp (món, kiểu): Latte Ice và Latte Hot là 2 dòng riêng
-  function doiSoLuong(khach, monId, delta, kieu) {
+  // Mỗi dòng order là 1 bộ (món, Ice/Hot, less sugar, less ice): khác nhau là dòng riêng
+  function doiSoLuong(khach, monId, delta, bt) {
     const dong = khach.dong.slice();
-    const i = dong.findIndex(function (d) { return cungDong(d, monId, kieu); });
+    const i = dong.findIndex(function (d) { return cungDong(d, monId, bt); });
     if (i < 0) {
-      if (delta > 0) dong.push({ monId: monId, kieu: chuanKieu(kieu), soLuong: delta, ghiChu: null });
+      if (delta > 0) dong.push(Object.assign({ monId: monId }, chuanBienThe(bt), { soLuong: delta, ghiChu: null }));
     } else {
       const sl = dong[i].soLuong + delta;
       if (sl <= 0) dong.splice(i, 1);
@@ -139,15 +147,15 @@
     return Object.assign({}, khach, { lichSu: ls });
   }
 
-  // +1 ly (chạm ô món), kieu = 'ice' | 'hot'
-  function themMon(khach, monId, kieu) {
-    return ghiLichSu(doiSoLuong(khach, monId, 1, kieu), { loai: '+', monId: monId, kieu: chuanKieu(kieu) });
+  // +1 ly (chạm ô món); bt = 'ice' | 'hot' | { kieu, itDuong, itDa }
+  function themMon(khach, monId, bt) {
+    return ghiLichSu(doiSoLuong(khach, monId, 1, bt), Object.assign({ loai: '+', monId: monId }, chuanBienThe(bt)));
   }
 
   // −1 ly (nút − trong Danh sách)
-  function botMon(khach, monId, kieu) {
-    if (soLuongDong(khach, monId, kieu) <= 0) return khach;
-    return ghiLichSu(doiSoLuong(khach, monId, -1, kieu), { loai: '-', monId: monId, kieu: chuanKieu(kieu) });
+  function botMon(khach, monId, bt) {
+    if (soLuongDong(khach, monId, bt) <= 0) return khach;
+    return ghiLichSu(doiSoLuong(khach, monId, -1, bt), Object.assign({ loai: '-', monId: monId }, chuanBienThe(bt)));
   }
 
   // Hoàn tác bước gần nhất của khách
@@ -155,7 +163,7 @@
     const ls = (khach.lichSu || []).slice();
     const buoc = ls.pop();
     if (!buoc) return khach;
-    const k = doiSoLuong(khach, buoc.monId, buoc.loai === '+' ? -1 : 1, buoc.kieu);
+    const k = doiSoLuong(khach, buoc.monId, buoc.loai === '+' ? -1 : 1, buoc);
     return Object.assign({}, k, { lichSu: ls });
   }
 
@@ -169,9 +177,24 @@
   }
 
   // Số ly của đúng 1 dòng (món + kiểu)
-  function soLuongDong(khach, monId, kieu) {
-    const d = khach.dong.find(function (x) { return cungDong(x, monId, kieu); });
+  function soLuongDong(khach, monId, bt) {
+    const d = khach.dong.find(function (x) { return cungDong(x, monId, bt); });
     return d ? d.soLuong : 0;
+  }
+
+  // Số ly Hot (hoặc Ice) của 1 món, gộp mọi ghi chú less sugar / less ice
+  function soLuongKieu(khach, monId, kieu) {
+    return khach.dong.reduce(function (s, d) {
+      return s + (d.monId === monId && chuanKieu(d.kieu) === chuanKieu(kieu) ? d.soLuong : 0);
+    }, 0);
+  }
+
+  // " less sugar, less ice"
+  function nhanGhiChu(d) {
+    const ds = [];
+    if (d.itDuong) ds.push('less sugar');
+    if (d.itDa && chuanKieu(d.kieu) !== 'hot') ds.push('less ice');
+    return ds.length ? ' ' + ds.join(', ') : '';
   }
 
   function nhanKieu(kieu) {
@@ -193,7 +216,7 @@
   function tomTat(khach, menu) {
     return khach.dong.map(function (d) {
       const m = timMon(menu, d.monId);
-      return d.soLuong + ' ' + (m ? m.ten : 'Món đã xóa') + nhanKieu(d.kieu);
+      return d.soLuong + ' ' + (m ? m.ten : 'Món đã xóa') + nhanKieu(d.kieu) + nhanGhiChu(d);
     }).join(' · ');
   }
 
@@ -360,18 +383,20 @@
       (Array.isArray(k.dong) ? k.dong : []).forEach(function (d) {
         const sl = d && soNguyen(d.soLuong, 1);
         if (!d || !d.monId || !sl) return;
-        const kieu = chuanKieu(d.kieu);
-        const khoa = d.monId + '|' + kieu;
+        const bt = chuanBienThe(d);
+        const khoa = [d.monId, bt.kieu, bt.itDuong, bt.itDa].join('|');
         if (gop.has(khoa)) gop.get(khoa).soLuong += sl;
-        else gop.set(khoa, { monId: d.monId, kieu: kieu, soLuong: sl, ghiChu: d.ghiChu == null ? null : d.ghiChu });
+        else gop.set(khoa, Object.assign({ monId: d.monId }, bt, { soLuong: sl, ghiChu: d.ghiChu == null ? null : d.ghiChu }));
       });
       const lichSu = (Array.isArray(k.lichSu) ? k.lichSu : []).filter(function (b) {
         return b && b.monId && (b.loai === '+' || b.loai === '-');
-      }).slice(-MAX_LICH_SU).map(function (b) { return { loai: b.loai, monId: b.monId, kieu: chuanKieu(b.kieu) }; });
+      }).slice(-MAX_LICH_SU).map(function (b) { return Object.assign({ loai: b.loai, monId: b.monId }, chuanBienThe(b)); });
       return Object.assign({ nhanBan: null }, k, { so: so, dong: Array.from(gop.values()), lichSu: lichSu });
     });
     st.demKhach = soNguyen(st.demKhach, 0) || 0;
     st.kieu = chuanKieu(st.kieu) || 'ice';
+    st.itDuong = !!st.itDuong;
+    st.itDa = !!st.itDa && st.kieu !== 'hot';
   }
 
   // Mở app: chuyển đổi, sang ngày mới thì bỏ khách trống, luôn có ít nhất 1 khách.
@@ -433,7 +458,7 @@
     timMon: timMon, nhomVaMon: nhomVaMon, taoIdMoi: taoIdMoi,
     doSang: doSang, tuongPhan: tuongPhan, mauChu: mauChu,
     tenKhach: tenKhach, doiTenKhach: doiTenKhach, themMon: themMon, botMon: botMon, hoanTac: hoanTac, coTheHoanTac: coTheHoanTac,
-    soLuongMon: soLuongMon, soLuongDong: soLuongDong, nhanKieu: nhanKieu, soLy: soLy, tongTien: tongTien, tomTat: tomTat,
+    soLuongMon: soLuongMon, soLuongDong: soLuongDong, soLuongKieu: soLuongKieu, nhanKieu: nhanKieu, nhanGhiChu: nhanGhiChu, chuanBienThe: chuanBienThe, soLy: soLy, tongTien: tongTien, tomTat: tomTat,
     menhGiaGoiY: menhGiaGoiY, congMenhGia: congMenhGia, tienThua: tienThua, hieuSoTien: hieuSoTien,
     ngayKinhDoanh: ngayKinhDoanh, timKhach: timKhach, taoKhach: taoKhach, chonKhach: chonKhach,
     capNhatKhach: capNhatKhach, xongKhach: xongKhach, hoanLaiXong: hoanLaiXong,

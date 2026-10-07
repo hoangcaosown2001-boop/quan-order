@@ -289,13 +289,13 @@ test('thử 20.000 thao tác ngẫu nhiên: tổng tiền luôn đúng, không b
       const p = r();
       if (p < 0.5) {
         const id = chon(ids);
-        st = C.capNhatKhach(st, C.themMon(k, id, r() < 0.5 ? 'ice' : 'hot'));
+        st = C.capNhatKhach(st, C.themMon(k, id, { kieu: r() < 0.5 ? 'ice' : 'hot', itDuong: r() < 0.3, itDa: r() < 0.3 }));
         mh.set(id, (mh.get(id) || 0) + 1);
         ls.push(['+', id]);
       } else if (p < 0.6 && k.dong.length) {
         const d = chon(k.dong);
         const id = d.monId;
-        st = C.capNhatKhach(st, C.botMon(k, id, d.kieu));
+        st = C.capNhatKhach(st, C.botMon(k, id, d));
         mh.set(id, mh.get(id) - 1);
         ls.push(['-', id]);
       } else if (p < 0.72) {
@@ -368,7 +368,7 @@ test('dữ liệu hỏng/sai kiểu không làm tổng tiền sai hay app lỗi'
   assert.ok(Array.isArray(st.menu.thuTuNhom));
   assert.equal(st.khach.length, 2);
   assert.notEqual(st.khach[0].so, st.khach[1].so, 'số khách trùng được tách ra');
-  assert.deepEqual(st.khach[0].dong, [{ monId: 'x', kieu: null, soLuong: 4, ghiChu: null }], 'gộp dòng trùng, bỏ số lượng âm');
+  assert.deepEqual(st.khach[0].dong, [{ monId: 'x', kieu: null, itDuong: false, itDa: false, soLuong: 4, ghiChu: null }], 'gộp dòng trùng, bỏ số lượng âm');
   assert.equal(C.tongTien(st.khach[0], st.menu), 100000);
   assert.equal(st.dangChon, 'k1');
   assert.equal(C.hieuSoTien('9'.repeat(30)), 100000000, 'số gõ quá dài bị chặn');
@@ -414,4 +414,26 @@ test('Ice / Hot: cùng món tách 2 dòng, tổng đúng, hoàn tác đúng ly v
   const cu = C.khoiTao({ menu: C.saoMenu(MENU), khach: [{ id: 'x', so: 1, dong: [{ monId: 'latte', soLuong: 2 }] }], dangChon: 'x', ngay: C.ngayKinhDoanh(SANG) }, MENU, SANG);
   assert.equal(C.tongTien(cu.khach[0], cu.menu), 76000);
   assert.equal(cu.kieu, 'ice', 'mặc định Ice');
+});
+
+test('Less sugar / Less ice: tách dòng riêng, ghi rõ, hoàn tác đúng; Hot không có less ice', () => {
+  let k = { id: 'a', so: 1, dong: [], lichSu: [] };
+  k = C.themMon(k, 'vn-sua', 'ice');
+  k = C.themMon(k, 'vn-sua', { kieu: 'ice', itDuong: true });
+  k = C.themMon(k, 'vn-sua', { kieu: 'ice', itDuong: true, itDa: true });
+  k = C.themMon(k, 'latte', { kieu: 'hot', itDuong: true, itDa: true });
+  assert.equal(k.dong.length, 4);
+  assert.equal(C.tomTat(k, MENU), '1 VN Sữa🧊 · 1 VN Sữa🧊 less sugar · 1 VN Sữa🧊 less sugar, less ice · 1 Latte🔥 less sugar');
+  assert.equal(k.dong[3].itDa, false, 'ly Hot bỏ less ice');
+  assert.equal(C.tongTien(k, MENU), 25000 * 3 + 38000);
+  assert.equal(C.soLuongMon(k, 'vn-sua'), 3);
+  assert.equal(C.soLuongKieu(k, 'vn-sua', 'ice'), 3);
+  assert.equal(C.soLuongDong(k, 'vn-sua', { kieu: 'ice', itDuong: true }), 1);
+  k = C.hoanTac(k); // bỏ Latte
+  k = C.hoanTac(k); // bỏ VN Sữa less sugar, less ice
+  assert.equal(C.soLuongDong(k, 'vn-sua', { kieu: 'ice', itDuong: true, itDa: true }), 0);
+  assert.equal(C.soLuongDong(k, 'vn-sua', { kieu: 'ice', itDuong: true }), 1);
+  assert.equal(C.soLuongDong(k, 'vn-sua', 'ice'), 1);
+  k = C.botMon(k, 'vn-sua', { kieu: 'ice', itDuong: true });
+  assert.equal(C.tomTat(k, MENU), '1 VN Sữa🧊');
 });

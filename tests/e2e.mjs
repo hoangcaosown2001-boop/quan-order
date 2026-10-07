@@ -455,6 +455,51 @@ for (const may of MAY) {
   await ctx.close();
 }
 
+// ===== Less sugar / Less ice =====
+{
+  const { ctx, p } = await moApp(MAY[0]);
+  await cham(p, 'vn-sua');
+  await p.tap('#nutItDuong');
+  await cham(p, 'vn-sua');
+  await p.tap('#nutItDa');
+  await cham(p, 'vn-sua'); await cham(p, 'latte');
+  const t1 = await p.textContent('#tomTat');
+  kiem(t1 === '1 VN Sữa🧊 · 1 VN Sữa🧊 less sugar · 1 VN Sữa🧊 less sugar, less ice · 1 Latte🧊 less sugar, less ice' && (await p.textContent('#soTong')) === '113.000đ',
+    'Bật Less sugar / Less ice → ly chạm sau được ghi kèm, tách dòng riêng, tổng đúng', t1);
+  kiem((await p.textContent('[data-mon="vn-sua"] .sl')) === '×3', 'Ô món vẫn đếm tổng số ly (×3)');
+  const dauTrang = await p.evaluate(() => ({ tomTat: document.getElementById('tomTat').getBoundingClientRect().height, dau: document.querySelector('.dau-order').getBoundingClientRect().height }));
+  kiem(dauTrang.tomTat <= 21 && dauTrang.dau <= 80, 'Tóm tắt dài vẫn 1 dòng (cắt "…"), không đẩy lưới món xuống', JSON.stringify(dauTrang));
+  await p.$eval('#luoiMenu', (e) => { e.scrollTop = 0; });
+  await p.waitForTimeout(300);
+  await p.screenshot({ path: path.join(ANH, '10-less-sugar-ice-iphone15.png') });
+  await p.tap('#nutDanhSach');
+  await p.waitForTimeout(250);
+  const ds = await p.$$eval('.dong-ds .ten', (e) => e.map((x) => x.textContent));
+  kiem(ds[1].includes('Less sugar') && !ds[1].includes('Less ice') && ds[2].includes('Less sugar') && ds[2].includes('Less ice'), 'Danh sách ghi rõ Less sugar / Less ice từng dòng', ds.join(' | '));
+  await p.screenshot({ path: path.join(ANH, '10b-danh-sach-less-iphone15.png') });
+  await p.tap('#nenSheet', { position: { x: 30, y: 40 } });
+  await p.waitForTimeout(400);
+  await p.tap('#nutHoanTac');
+  kiem(!(await p.textContent('#tomTat')).includes('Latte'), 'Hoàn tác bỏ đúng ly vừa bấm');
+  // Hot → Less ice bị khóa
+  await p.tap('#chonKieu [data-kieu="hot"]');
+  kiem(await p.$eval('#nutItDa', (b) => b.disabled && !b.classList.contains('bat')), 'Chọn Hot → Less ice tự tắt và bị khóa');
+  await cham(p, 'americano');
+  kiem((await p.textContent('#tomTat')).endsWith('1 Americano🔥 less sugar'), 'Ly Hot chỉ ghi less sugar');
+  await p.tap('#chonKieu [data-kieu="ice"]');
+  // Thêm khách → tự tắt
+  await p.tap('#nutThemKhach');
+  kiem(await p.$eval('#nutItDuong', (b) => !b.classList.contains('bat')), 'Thêm / chuyển khách → Less sugar, Less ice tự tắt');
+  await cham(p, 'vn-den');
+  kiem((await p.textContent('#tomTat')) === '1 VN Đen🧊', 'Khách mới không bị dính ghi chú của khách trước');
+  await p.reload();
+  await p.waitForSelector('.o-mon');
+  await p.tap('.chip >> text=Khách 1');
+  kiem((await p.textContent('#tomTat')).includes('less sugar, less ice'), 'Tải lại: ghi chú vẫn còn');
+  kiem(p.loiTrang.length === 0, 'Less sugar / ice không có lỗi JavaScript', p.loiTrang.join(' | '));
+  await ctx.close();
+}
+
 // ===== Chạm đúp "Xong" không rơi xuống nút bên dưới =====
 {
   const { ctx, p } = await moApp(MAY[0]);
