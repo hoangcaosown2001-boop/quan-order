@@ -110,11 +110,21 @@
   }
 
   // Đổi số lượng 1 món (không ghi lịch sử). Về 0 thì xóa dòng.
-  function doiSoLuong(khach, monId, delta) {
+  // Kiểu ly: 'ice' | 'hot' | null (dữ liệu cũ chưa có)
+  const KIEU = ['ice', 'hot'];
+  function chuanKieu(kieu) {
+    return KIEU.indexOf(kieu) >= 0 ? kieu : null;
+  }
+  function cungDong(d, monId, kieu) {
+    return d.monId === monId && chuanKieu(d.kieu) === chuanKieu(kieu);
+  }
+
+  // Mỗi dòng order là 1 cặp (món, kiểu): Latte Ice và Latte Hot là 2 dòng riêng
+  function doiSoLuong(khach, monId, delta, kieu) {
     const dong = khach.dong.slice();
-    const i = dong.findIndex(function (d) { return d.monId === monId; });
+    const i = dong.findIndex(function (d) { return cungDong(d, monId, kieu); });
     if (i < 0) {
-      if (delta > 0) dong.push({ monId: monId, soLuong: delta, ghiChu: null });
+      if (delta > 0) dong.push({ monId: monId, kieu: chuanKieu(kieu), soLuong: delta, ghiChu: null });
     } else {
       const sl = dong[i].soLuong + delta;
       if (sl <= 0) dong.splice(i, 1);
@@ -129,15 +139,15 @@
     return Object.assign({}, khach, { lichSu: ls });
   }
 
-  // +1 ly (chạm ô món)
-  function themMon(khach, monId) {
-    return ghiLichSu(doiSoLuong(khach, monId, 1), { loai: '+', monId: monId });
+  // +1 ly (chạm ô món), kieu = 'ice' | 'hot'
+  function themMon(khach, monId, kieu) {
+    return ghiLichSu(doiSoLuong(khach, monId, 1, kieu), { loai: '+', monId: monId, kieu: chuanKieu(kieu) });
   }
 
   // −1 ly (nút − trong Danh sách)
-  function botMon(khach, monId) {
-    if (soLuongMon(khach, monId) <= 0) return khach;
-    return ghiLichSu(doiSoLuong(khach, monId, -1), { loai: '-', monId: monId });
+  function botMon(khach, monId, kieu) {
+    if (soLuongDong(khach, monId, kieu) <= 0) return khach;
+    return ghiLichSu(doiSoLuong(khach, monId, -1, kieu), { loai: '-', monId: monId, kieu: chuanKieu(kieu) });
   }
 
   // Hoàn tác bước gần nhất của khách
@@ -145,7 +155,7 @@
     const ls = (khach.lichSu || []).slice();
     const buoc = ls.pop();
     if (!buoc) return khach;
-    const k = doiSoLuong(khach, buoc.monId, buoc.loai === '+' ? -1 : 1);
+    const k = doiSoLuong(khach, buoc.monId, buoc.loai === '+' ? -1 : 1, buoc.kieu);
     return Object.assign({}, k, { lichSu: ls });
   }
 
@@ -153,9 +163,19 @@
     return !!(khach && khach.lichSu && khach.lichSu.length);
   }
 
+  // Tổng số ly của 1 món (cả Ice lẫn Hot)
   function soLuongMon(khach, monId) {
-    const d = khach.dong.find(function (x) { return x.monId === monId; });
+    return khach.dong.reduce(function (s, d) { return s + (d.monId === monId ? d.soLuong : 0); }, 0);
+  }
+
+  // Số ly của đúng 1 dòng (món + kiểu)
+  function soLuongDong(khach, monId, kieu) {
+    const d = khach.dong.find(function (x) { return cungDong(x, monId, kieu); });
     return d ? d.soLuong : 0;
+  }
+
+  function nhanKieu(kieu) {
+    return kieu === 'hot' ? '🔥' : kieu === 'ice' ? '🧊' : '';
   }
 
   function soLy(khach) {
@@ -173,7 +193,7 @@
   function tomTat(khach, menu) {
     return khach.dong.map(function (d) {
       const m = timMon(menu, d.monId);
-      return d.soLuong + ' ' + (m ? m.ten : 'Món đã xóa');
+      return d.soLuong + ' ' + (m ? m.ten : 'Món đã xóa') + nhanKieu(d.kieu);
     }).join(' · ');
   }
 
@@ -290,6 +310,7 @@
       ngay: ngayKinhDoanh(now),
       demKhach: 0,
       giaoDien: 'tu-dong',
+      kieu: 'ice',
       ngayBatDau: now,
       lanSaoLuu: null,
       lanNhacSaoLuu: null,
@@ -339,15 +360,18 @@
       (Array.isArray(k.dong) ? k.dong : []).forEach(function (d) {
         const sl = d && soNguyen(d.soLuong, 1);
         if (!d || !d.monId || !sl) return;
-        if (gop.has(d.monId)) gop.get(d.monId).soLuong += sl;
-        else gop.set(d.monId, { monId: d.monId, soLuong: sl, ghiChu: d.ghiChu == null ? null : d.ghiChu });
+        const kieu = chuanKieu(d.kieu);
+        const khoa = d.monId + '|' + kieu;
+        if (gop.has(khoa)) gop.get(khoa).soLuong += sl;
+        else gop.set(khoa, { monId: d.monId, kieu: kieu, soLuong: sl, ghiChu: d.ghiChu == null ? null : d.ghiChu });
       });
       const lichSu = (Array.isArray(k.lichSu) ? k.lichSu : []).filter(function (b) {
         return b && b.monId && (b.loai === '+' || b.loai === '-');
-      }).slice(-MAX_LICH_SU);
+      }).slice(-MAX_LICH_SU).map(function (b) { return { loai: b.loai, monId: b.monId, kieu: chuanKieu(b.kieu) }; });
       return Object.assign({ nhanBan: null }, k, { so: so, dong: Array.from(gop.values()), lichSu: lichSu });
     });
     st.demKhach = soNguyen(st.demKhach, 0) || 0;
+    st.kieu = chuanKieu(st.kieu) || 'ice';
   }
 
   // Mở app: chuyển đổi, sang ngày mới thì bỏ khách trống, luôn có ít nhất 1 khách.
@@ -409,7 +433,7 @@
     timMon: timMon, nhomVaMon: nhomVaMon, taoIdMoi: taoIdMoi,
     doSang: doSang, tuongPhan: tuongPhan, mauChu: mauChu,
     tenKhach: tenKhach, doiTenKhach: doiTenKhach, themMon: themMon, botMon: botMon, hoanTac: hoanTac, coTheHoanTac: coTheHoanTac,
-    soLuongMon: soLuongMon, soLy: soLy, tongTien: tongTien, tomTat: tomTat,
+    soLuongMon: soLuongMon, soLuongDong: soLuongDong, nhanKieu: nhanKieu, soLy: soLy, tongTien: tongTien, tomTat: tomTat,
     menhGiaGoiY: menhGiaGoiY, congMenhGia: congMenhGia, tienThua: tienThua, hieuSoTien: hieuSoTien,
     ngayKinhDoanh: ngayKinhDoanh, timKhach: timKhach, taoKhach: taoKhach, chonKhach: chonKhach,
     capNhatKhach: capNhatKhach, xongKhach: xongKhach, hoanLaiXong: hoanLaiXong,

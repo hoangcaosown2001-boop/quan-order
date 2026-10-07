@@ -5,7 +5,7 @@
 ## 6 bước
 
 1. **Cài lên iPhone:** mở link trên bằng **Safari** → bấm nút **Chia sẻ** (ô vuông có mũi tên) → **Thêm vào MH chính** → **Thêm**. Từ giờ mở app bằng biểu tượng ly cà phê trên màn hình chính, dùng được cả khi mất mạng.
-2. **Order:** mỗi lần chạm 1 ô món là thêm 1 ly cho khách đang chọn. Bấm nhầm thì bấm **↩ Hoàn tác** (bấm nhiều lần để lùi nhiều bước). **+ Khách** thêm khách mới; chạm chip `Khách 1 · 45k` để chuyển qua lại; chạm vào chip **đang chọn** để đặt tên nhanh A1–D10 hoặc Take away 1–4 (bấm **Bỏ tên** để về "Khách N"). **☰ Danh sách** để xem và sửa số lượng bằng nút − / +.
+2. **Order:** chọn **🧊 Ice** hoặc **🔥 Hot** ở góc trên (app nhớ lựa chọn cho đến khi bạn đổi), rồi mỗi lần chạm 1 ô món là thêm 1 ly cho khách đang chọn. Bấm nhầm thì bấm **↩ Hoàn tác** (bấm nhiều lần để lùi nhiều bước). **+ Khách** thêm khách mới; chạm chip `Khách 1 · 45k` để chuyển qua lại; chạm vào chip **đang chọn** để đặt tên nhanh A1–D10 hoặc Take away 1–4 (bấm **Bỏ tên** để về "Khách N"). **☰ Danh sách** để xem và sửa số lượng bằng nút − / +.
 3. **Thu tiền:** chạm vào **số tổng to** ở trên cùng → bấm các tờ khách đưa (**50k · 100k · 200k · 500k**, bấm nhiều lần sẽ cộng dồn: 2 lần 50k = 100k) hoặc tự gõ số vào ô (gõ `150` = 150.000đ) → app hiện **Thối lại** → bấm **✓ Xong**. Nút **↺** để nhập lại từ đầu. Bấm Xong nhầm thì bấm **Hoàn lại** trên thanh thông báo (có 8 giây).
 4. **Thêm công thức bằng ảnh:** vào tab **Công thức** → nút **+** → **+ Ảnh** (chọn ảnh trong máy hoặc chụp mới, chọn được nhiều ảnh, ảnh đầu là ảnh bìa) → gõ tên món, điền ly, đá, nguyên liệu, các bước → **✓ Lưu**. Chạm vào ảnh trong danh sách để xem công thức; chạm ảnh lớn để phóng to.
 5. **Sửa menu:** vào **⚙ Cài đặt** → mục **Menu** → chạm vào món để sửa tên, giá (gõ `35` là 35.000đ), nhóm, ★ bán chạy, hoặc xóa. Chạm vào tên nhóm để đổi tên/màu; nút ↑ ↓ để đổi thứ tự nhóm.
@@ -35,6 +35,7 @@
 - **Nút ✕ trên chip:** chip của khách đang chọn luôn có **✕** để xóa khách ngay (kể cả khi đã có món), có **Hoàn lại** 8 giây nếu bấm nhầm.
 - **Số khách:** đổi ngày lúc 04:00 sáng giờ Việt Nam. Sang ngày mới, các khách **trống** từ hôm trước tự biến mất, khách **còn món** được giữ lại. Số đếm lại từ nhỏ nhất chưa dùng.
 - **Tên khách A1–D10:** chạm chip đang chọn → bảng 4 cột × 10 dòng + hàng Take away 1–4, chạm 1 ô là xong. Ô đang được khách khác dùng hiện mờ (vẫn chọn được).
+- **Ice / Hot:** nút gạt ở đầu trang, mặc định Ice. Bật Hot thì nút và dải trên cùng đổi màu cam để dễ nhận ra. Cùng món nhưng khác kiểu là 2 dòng riêng (`2 Latte🧊 · 1 Latte🔥`), trên ô món có 2 huy hiệu `×2` và `🔥1`. Giá không đổi theo Ice/Hot.
 - **Hoàn tác** lùi cả thao tác chạm ô món lẫn nút − / + trong Danh sách (tối đa 50 bước mỗi khách).
 - **Tiền khách đưa:** bảng cố định 50k/100k/200k/500k, mỗi lần bấm cộng thêm 1 tờ (số lần hiện trên nút); ô tự nhập luôn có, gõ `600` hiểu là 600.000đ.
 - **Danh sách** có thêm nút **Thu tiền** để đi thẳng sang màn thanh toán.

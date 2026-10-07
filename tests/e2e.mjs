@@ -418,6 +418,43 @@ for (const may of MAY) {
   await ctx.close();
 }
 
+// ===== Ice / Hot ở đầu trang =====
+{
+  const { ctx, p } = await moApp(MAY[0]);
+  kiem(await p.$eval('#chonKieu [data-kieu="ice"]', (b) => b.classList.contains('chon')), 'Mặc định đang chọn Ice');
+  await cham(p, 'latte'); await cham(p, 'latte');
+  await p.tap('#chonKieu [data-kieu="hot"]');
+  await cham(p, 'latte'); await cham(p, 'americano');
+  const hh = await p.evaluate(() => ({
+    latte: [...document.querySelectorAll('[data-mon="latte"] .sl')].map((x) => x.textContent).join(' '),
+    tomTat: document.getElementById('tomTat').textContent,
+    tong: document.getElementById('soTong').textContent,
+  }));
+  kiem(hh.latte === '🔥1 ×2' && hh.tomTat === '2 Latte🧊 · 1 Latte🔥 · 1 Americano🔥' && hh.tong === '144.000đ',
+    'Bật Hot → món chạm sau là Hot, tách riêng với Ice, tổng đúng', JSON.stringify(hh));
+  await p.$eval('#luoiMenu', (e) => { e.scrollTop = 0; });
+  await p.waitForTimeout(300);
+  await p.screenshot({ path: path.join(ANH, '9-ice-hot-iphone15.png') });
+  await p.tap('#nutHoanTac');
+  kiem((await p.textContent('#tomTat')) === '2 Latte🧊 · 1 Latte🔥', 'Hoàn tác bỏ đúng ly Hot vừa bấm');
+  await p.tap('#nutDanhSach');
+  const ds = await p.$$eval('.dong-ds .ten', (e) => e.map((x) => x.textContent));
+  kiem(ds.length === 2 && ds[0].includes('Ice') && ds[1].includes('Hot'), 'Danh sách ghi rõ Ice / Hot từng dòng', ds.join(' | '));
+  await p.waitForTimeout(250);
+  await p.screenshot({ path: path.join(ANH, '9b-danh-sach-ice-hot-iphone15.png') });
+  await p.tap('.dong-ds:nth-of-type(2) [aria-label="Bớt"]').catch(async () => {
+    const nut = await p.$$('.dong-ds [aria-label="Bớt"]'); await nut[1].tap();
+  });
+  kiem((await p.textContent('#tomTat')) === '2 Latte🧊', 'Nút − trong Danh sách bớt đúng dòng Hot');
+  await p.tap('#nenSheet', { position: { x: 30, y: 40 } });
+  await p.reload();
+  await p.waitForSelector('.o-mon');
+  kiem(await p.$eval('#chonKieu [data-kieu="hot"]', (b) => b.classList.contains('chon')) && (await p.textContent('#tomTat')) === '2 Latte🧊',
+    'Tải lại: vẫn nhớ đang chọn Hot và order còn nguyên');
+  kiem(p.loiTrang.length === 0, 'Ice / Hot không có lỗi JavaScript', p.loiTrang.join(' | '));
+  await ctx.close();
+}
+
 // ===== Chạm đúp "Xong" không rơi xuống nút bên dưới =====
 {
   const { ctx, p } = await moApp(MAY[0]);

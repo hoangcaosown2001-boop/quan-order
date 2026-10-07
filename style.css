@@ -106,17 +106,24 @@ body.chan-cham #app { pointer-events: none; }
   user-select: none;
   -webkit-user-select: none;
 }
-.tong-dong { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.dau-order { flex: none; position: relative; }
+.tong-dong { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-right: 146px; min-height: 44px; }
+.chon-kieu {
+  position: absolute; top: 4px; right: 10px; display: flex; gap: 2px; padding: 3px;
+  background: var(--be-mat-2); border-radius: 22px;
+}
+.chon-kieu button {
+  min-width: 64px; height: 38px; padding: 0 8px; border-radius: 19px; font-size: 15px; font-weight: 800; color: var(--chu-phu);
+}
+.chon-kieu button.chon[data-kieu="ice"] { background: #1F6FD1; color: #fff; }
+.chon-kieu button.chon[data-kieu="hot"] { background: #C2410C; color: #fff; box-shadow: 0 0 0 2px #C2410C66; }
+body.dang-hot .dau-order { background: color-mix(in srgb, #C2410C 10%, transparent); }
+.so-tong.dai { font-size: 32px; }
 .so-tong {
   font-size: 40px; line-height: 44px; font-weight: 800; letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
 }
-.nhan-thu {
-  flex: none; font-size: 14px; font-weight: 700; color: var(--nhan-chu); background: var(--nhan);
-  padding: 6px 12px; border-radius: 999px;
-}
-.tong.trong .nhan-thu { opacity: .3; }
-.tom-tat {
+.tong.trong .tom-tat {
   display: block; font-size: 15px; line-height: 20px; height: 20px; color: var(--chu-phu);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;
 }
@@ -184,12 +191,16 @@ body.chan-cham #app { pointer-events: none; }
 .o-mon.ban-chay { grid-column: span 2; min-height: 70px; padding: 7px 10px 6px; }
 .o-mon.ban-chay .ten { font-size: 19px; line-height: 22px; font-weight: 800; }
 .o-mon.ban-chay .gia { font-size: 14px; }
+.o-mon .hh { position: absolute; bottom: 4px; right: 4px; display: flex; gap: 3px; }
 .o-mon .sl {
-  position: absolute; bottom: 4px; right: 4px; min-width: 26px; height: 22px; padding: 0 6px; border-radius: 11px;
+  position: relative; min-width: 26px; height: 22px; padding: 0 6px; border-radius: 11px;
   background: #111; color: #fff; font-size: 14px; font-weight: 800; line-height: 22px; text-align: center;
   box-shadow: 0 0 0 2px #fff;
   font-variant-numeric: tabular-nums;
 }
+.o-mon .sl-nong { background: #C2410C; }
+.o-mon .hh.hai { right: 3px; bottom: 3px; gap: 2px; }
+.o-mon .hh.hai .sl { min-width: 0; height: 20px; line-height: 20px; padding: 0 5px; font-size: 12.5px; box-shadow: 0 0 0 1.5px #fff; }
 .o-mon.co { box-shadow: inset 0 0 0 3px currentColor; }
 
 /* ===== Thanh dưới ===== */
@@ -249,6 +260,9 @@ body:not(.o-order) .chi-order { display: none; }
 /* Danh sách món */
 .dong-ds { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--vien); }
 .dong-ds .ten { flex: 1; min-width: 0; font-weight: 700; font-size: 16px; }
+.tag-kieu { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 8px; font-size: 13px; font-weight: 800; color: #fff; vertical-align: 2px; }
+.tag-kieu.ice { background: #1F6FD1; }
+.tag-kieu.hot { background: #C2410C; }
 .dong-ds .ten small { display: block; font-weight: 500; color: var(--chu-phu); font-size: 13px; }
 .dong-ds .sl { width: 32px; text-align: center; font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; }
 .dong-ds .thanh-tien { width: 86px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }

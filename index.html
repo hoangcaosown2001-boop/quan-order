@@ -22,13 +22,18 @@
 
     <!-- ===== MÀN ORDER ===== -->
     <main id="manOrder" class="man hien" data-man="order">
-      <button id="nutTong" class="tong" type="button" aria-label="Thanh toán">
-        <span class="tong-dong">
-          <span id="soTong" class="so-tong">0đ</span>
-          <span id="nhanThu" class="nhan-thu">Thu tiền ›</span>
-        </span>
-        <span id="tomTat" class="tom-tat">Chạm món để thêm</span>
-      </button>
+      <div class="dau-order">
+        <button id="nutTong" class="tong" type="button" aria-label="Thanh toán">
+          <span class="tong-dong">
+            <span id="soTong" class="so-tong">0đ</span>
+          </span>
+          <span id="tomTat" class="tom-tat">Chạm món để thêm</span>
+        </button>
+        <div id="chonKieu" class="chon-kieu" role="radiogroup" aria-label="Ice hoặc Hot">
+          <button type="button" data-kieu="ice" role="radio">🧊 Ice</button>
+          <button type="button" data-kieu="hot" role="radio">🔥 Hot</button>
+        </div>
+      </div>
 
       <div class="dai-khach">
         <div id="dsKhach" class="ds-khach" role="tablist" aria-label="Khách"></div>

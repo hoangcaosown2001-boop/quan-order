@@ -6,7 +6,7 @@
   'use strict';
 
   const C = window.Core;
-  const PHIEN_BAN_APP = '1.0.5';
+  const PHIEN_BAN_APP = '1.1.0';
   const KHOA = 'quanOrder.trangThai';
   const KHOA_CT = 'quanOrder.congThuc';
   const BANG_MAU = ['#1F6FD1', '#8A5A3B', '#F3E5C8', '#F4B400', '#F48FB1', '#C43D22',
@@ -324,30 +324,56 @@
     });
   }
 
-  function datHuyHieu(o, sl) {
-    let b = o.querySelector('.sl');
-    if (sl > 0) {
-      if (!b) { b = el('span', { class: 'sl' }); o.append(b); }
-      b.textContent = '×' + sl;
+  // Huy hiệu trên ô: "×2" (Ice) và "🔥1" (Hot) riêng
+  function datHuyHieu(o, slDa, slNong) {
+    let hh = o.querySelector('.hh');
+    if (slDa + slNong > 0) {
+      if (!hh) { hh = el('span', { class: 'hh' }); o.append(hh); }
+      hh.textContent = '';
+      if (slNong) hh.append(el('span', { class: 'sl sl-nong', text: '🔥' + slNong }));
+      if (slDa) hh.append(el('span', { class: 'sl', text: '×' + slDa }));
+      hh.classList.toggle('hai', !!(slDa && slNong));
       o.classList.add('co');
-    } else if (b) {
-      b.remove();
+    } else if (hh) {
+      hh.remove();
       o.classList.remove('co');
     }
+  }
+  function huyHieuMon(o, k, id) {
+    const nong = C.soLuongDong(k, id, 'hot');
+    datHuyHieu(o, C.soLuongMon(k, id) - nong, nong);
   }
 
   // Huy hiệu số lượng của khách đang chọn trên mọi ô
   function capNhatHuyHieu() {
     const k = khachHienTai();
-    const sl = new Map(k.dong.map((d) => [d.monId, d.soLuong]));
-    oTheoMon.forEach(function (o, id) { datHuyHieu(o, sl.get(id) || 0); });
+    oTheoMon.forEach(function (o, id) { huyHieuMon(o, k, id); });
   }
+
+  // Nút gạt Ice / Hot ở đầu trang: áp cho các món chạm sau đó
+  function veKieu() {
+    document.querySelectorAll('#chonKieu button').forEach(function (b) {
+      const chon = b.dataset.kieu === st.kieu;
+      b.classList.toggle('chon', chon);
+      b.setAttribute('aria-checked', chon ? 'true' : 'false');
+    });
+    document.body.classList.toggle('dang-hot', st.kieu === 'hot');
+  }
+  $('#chonKieu').addEventListener('click', function (e) {
+    const b = e.target.closest('button');
+    if (!b || b.dataset.kieu === st.kieu) return;
+    st = Object.assign({}, st, { kieu: b.dataset.kieu });
+    veKieu();
+    luuSau();
+  });
 
   // Tổng tiền + tóm tắt + nút Hoàn tác/Danh sách
   function veTong() {
     const k = khachHienTai();
     const tong = C.tongTien(k, st.menu);
-    $('#soTong').textContent = C.dinhDangTien(tong);
+    const oTong = $('#soTong');
+    oTong.textContent = C.dinhDangTien(tong);
+    oTong.classList.toggle('dai', tong >= 1000000);
     $('#tomTat').textContent = k.dong.length ? C.tomTat(k, st.menu) : C.tenKhach(k) + ' · chạm món để thêm';
     $('#nutTong').classList.toggle('trong', !k.dong.length);
     $('#soLyDS').textContent = C.soLy(k);
@@ -402,9 +428,9 @@
     const o = e.target.closest('.o-mon');
     if (!o) return;
     const id = o.dataset.mon;
-    const k = C.themMon(khachHienTai(), id);
+    const k = C.themMon(khachHienTai(), id, st.kieu);
     st = C.capNhatKhach(st, k);
-    datHuyHieu(o, C.soLuongMon(k, id));
+    huyHieuMon(o, k, id);
     veTong();
     veChipHienTai();
     nhay(o);
@@ -486,10 +512,12 @@
         const m = C.timMon(st.menu, d.monId);
         const gia = m ? m.gia : 0;
         nd.append(el('div', { class: 'dong-ds' },
-          el('div', { class: 'ten' }, m ? m.ten : 'Món đã xóa', el('small', { text: C.dinhDangTien(gia) })),
-          el('button', { type: 'button', class: 'nut-tron', 'aria-label': 'Bớt', text: '−', onclick: () => doiDong(d.monId, -1) }),
+          el('div', { class: 'ten' }, m ? m.ten : 'Món đã xóa',
+            d.kieu ? el('span', { class: 'tag-kieu ' + d.kieu, text: d.kieu === 'hot' ? '🔥 Hot' : '🧊 Ice' }) : null,
+            el('small', { text: C.dinhDangTien(gia) })),
+          el('button', { type: 'button', class: 'nut-tron', 'aria-label': 'Bớt', text: '−', onclick: () => doiDong(d.monId, d.kieu, -1) }),
           el('span', { class: 'sl', text: d.soLuong }),
-          el('button', { type: 'button', class: 'nut-tron', 'aria-label': 'Thêm', text: '+', onclick: () => doiDong(d.monId, 1) }),
+          el('button', { type: 'button', class: 'nut-tron', 'aria-label': 'Thêm', text: '+', onclick: () => doiDong(d.monId, d.kieu, 1) }),
           el('span', { class: 'thanh-tien', text: C.dinhDangTien(gia * d.soLuong) })));
       });
       nd.append(el('div', { class: 'tong-ds' }, el('span', { text: 'Tổng' }), el('span', { text: C.dinhDangTien(C.tongTien(k, st.menu)) })));
@@ -499,9 +527,9 @@
     });
   }
 
-  function doiDong(monId, delta) {
+  function doiDong(monId, kieu, delta) {
     const k = khachHienTai();
-    st = C.capNhatKhach(st, delta > 0 ? C.themMon(k, monId) : C.botMon(k, monId));
+    st = C.capNhatKhach(st, delta > 0 ? C.themMon(k, monId, kieu) : C.botMon(k, monId, kieu));
     capNhatHuyHieu();
     veTong();
     veChipHienTai();
@@ -1401,6 +1429,7 @@
     ct.ds = ct.ds.filter((c) => c && c.id && typeof c.ten === 'string');
     ct.ds = ct.ds.map((c) => Object.assign({ anh: [], nguyenLieu: [], buoc: [], ghiChu: '', ly: '', da: '', giaVon: null }, c));
     apGiaoDien();
+    veKieu();
     document.body.classList.add('o-order');
     veLuoi();
     veOrder(true);

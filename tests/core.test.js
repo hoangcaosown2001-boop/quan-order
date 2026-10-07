@@ -289,12 +289,13 @@ test('thử 20.000 thao tác ngẫu nhiên: tổng tiền luôn đúng, không b
       const p = r();
       if (p < 0.5) {
         const id = chon(ids);
-        st = C.capNhatKhach(st, C.themMon(k, id));
+        st = C.capNhatKhach(st, C.themMon(k, id, r() < 0.5 ? 'ice' : 'hot'));
         mh.set(id, (mh.get(id) || 0) + 1);
         ls.push(['+', id]);
       } else if (p < 0.6 && k.dong.length) {
-        const id = chon(k.dong).monId;
-        st = C.capNhatKhach(st, C.botMon(k, id));
+        const d = chon(k.dong);
+        const id = d.monId;
+        st = C.capNhatKhach(st, C.botMon(k, id, d.kieu));
         mh.set(id, mh.get(id) - 1);
         ls.push(['-', id]);
       } else if (p < 0.72) {
@@ -367,7 +368,7 @@ test('dữ liệu hỏng/sai kiểu không làm tổng tiền sai hay app lỗi'
   assert.ok(Array.isArray(st.menu.thuTuNhom));
   assert.equal(st.khach.length, 2);
   assert.notEqual(st.khach[0].so, st.khach[1].so, 'số khách trùng được tách ra');
-  assert.deepEqual(st.khach[0].dong, [{ monId: 'x', soLuong: 4, ghiChu: null }], 'gộp dòng trùng, bỏ số lượng âm');
+  assert.deepEqual(st.khach[0].dong, [{ monId: 'x', kieu: null, soLuong: 4, ghiChu: null }], 'gộp dòng trùng, bỏ số lượng âm');
   assert.equal(C.tongTien(st.khach[0], st.menu), 100000);
   assert.equal(st.dangChon, 'k1');
   assert.equal(C.hieuSoTien('9'.repeat(30)), 100000000, 'số gõ quá dài bị chặn');
@@ -385,4 +386,32 @@ test('"Hoàn lại" đúng lúc qua 04:00 không tạo 2 khách trùng số', ()
   const so = lai.khach.map((k) => k.so);
   assert.equal(new Set(so).size, so.length);
   assert.equal(lai.khach.length, 4);
+});
+
+test('Ice / Hot: cùng món tách 2 dòng, tổng đúng, hoàn tác đúng ly vừa bấm', () => {
+  let k = { id: 'a', so: 1, dong: [], lichSu: [] };
+  k = C.themMon(k, 'latte', 'ice');
+  k = C.themMon(k, 'latte', 'ice');
+  k = C.themMon(k, 'latte', 'hot');
+  k = C.themMon(k, 'vn-den', 'hot');
+  assert.equal(k.dong.length, 3);
+  assert.equal(C.soLuongMon(k, 'latte'), 3, 'tổng cả Ice và Hot');
+  assert.equal(C.soLuongDong(k, 'latte', 'ice'), 2);
+  assert.equal(C.soLuongDong(k, 'latte', 'hot'), 1);
+  assert.equal(C.tongTien(k, MENU), 38000 * 3 + 25000);
+  assert.equal(C.tomTat(k, MENU), '2 Latte🧊 · 1 Latte🔥 · 1 VN Đen🔥');
+  k = C.hoanTac(k); // bỏ VN Đen Hot
+  k = C.hoanTac(k); // bỏ Latte Hot (không đụng Latte Ice)
+  assert.equal(C.soLuongDong(k, 'latte', 'hot'), 0);
+  assert.equal(C.soLuongDong(k, 'latte', 'ice'), 2);
+  k = C.botMon(k, 'latte', 'hot');
+  assert.equal(C.soLuongDong(k, 'latte', 'ice'), 2, 'bớt Hot khi không có Hot thì không đổi');
+  k = C.botMon(k, 'latte', 'ice');
+  assert.equal(C.soLuongDong(k, 'latte', 'ice'), 1);
+  k = C.hoanTac(k);
+  assert.equal(C.soLuongDong(k, 'latte', 'ice'), 2);
+  // dữ liệu cũ chưa có kiểu vẫn tính đúng
+  const cu = C.khoiTao({ menu: C.saoMenu(MENU), khach: [{ id: 'x', so: 1, dong: [{ monId: 'latte', soLuong: 2 }] }], dangChon: 'x', ngay: C.ngayKinhDoanh(SANG) }, MENU, SANG);
+  assert.equal(C.tongTien(cu.khach[0], cu.menu), 76000);
+  assert.equal(cu.kieu, 'ice', 'mặc định Ice');
 });
